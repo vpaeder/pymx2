@@ -89,12 +89,8 @@ Clone the repository to your local machine using Git. For example, you can run t
 git clone https://github.com/vpaeder/pymx2.git
 ```
 Navigate to the project directory:
-
 ```bash
-sudo python -m setup.py install
-```
-```bash
-cd mobility
+cd pymx2
 ```
 Create a Docker container:
 ```bash
@@ -104,7 +100,7 @@ Install the required dependencies:
 ```bash
 python -m setup install
 ```
-Run the unit tests to make sure everything is working properly::
+Run the unit tests to make sure everything is working properly:
 ```bash
 python -m unittest
 ```
