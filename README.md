@@ -80,3 +80,35 @@ python -m pydoc mx2
 ```python
 import mx2; help(mx2)
 ```
+
+## Setting up a development environment with Docker
+Make sure you have [Docker installed](https://docs.docker.com/get-docker/) on your machine.
+
+Clone the repository to your local machine using Git. For example, you can run the following command in your terminal:
+```bash
+git clone https://github.com/vpaeder/pymx2.git
+```
+Navigate to the project directory:
+
+```bash
+sudo python -m setup.py install
+```
+```bash
+cd mobility
+```
+Create a Docker container:
+```bash
+docker run -it --name pymx2-dev  -v /opt/pymx2 -v /$(pwd):/opt python:3.11 bash
+```
+Install the required dependencies:
+```bash
+python -m setup install
+```
+Run the unit tests to make sure everything is working properly::
+```bash
+python -m unittest
+```
+Starts a Docker container:
+```bash
+docker container start -i pymx2-dev
+```
