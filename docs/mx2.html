@@ -1,0 +1,340 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: package mx2</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>mx2</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/Users/vpaeder/Projects/pymx2/mx2/__init__.py">/Users/vpaeder/Projects/pymx2/mx2/__init__.py</a></font></td></tr></table>
+    <p><tt>A&nbsp;driver&nbsp;to&nbsp;communicate&nbsp;with&nbsp;an&nbsp;Omron&nbsp;<a href="#MX2">MX2</a>&nbsp;inverter&nbsp;through&nbsp;Modbus.<br>
+&nbsp;<br>
+Classes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#MX2">MX2</a><br>
+&nbsp;<br>
+Functions:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;crc16<br>
+&nbsp;<br>
+Submodules:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;enums<br>
+&nbsp;&nbsp;&nbsp;&nbsp;exceptions</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Package Contents</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="mx2.enums.html">enums</a><br>
+</td><td width="25%" valign=top><a href="mx2.exceptions.html">exceptions</a><br>
+</td><td width="25%" valign=top><a href="mx2.types.html">types</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="builtins.html#object">builtins.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="mx2.html#MX2">MX2</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="MX2">class <strong>MX2</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#MX2">MX2</a>(port:&nbsp;str&nbsp;=&nbsp;'',&nbsp;baud_rate:&nbsp;int&nbsp;=&nbsp;9600,&nbsp;parity:&nbsp;str&nbsp;=&nbsp;'N')&nbsp;-&amp;gt;&nbsp;None<br>
+&nbsp;<br>
+A&nbsp;driver&nbsp;to&nbsp;control&nbsp;an&nbsp;Omron&nbsp;<a href="#MX2">MX2</a>&nbsp;inverter<br>
+using&nbsp;RS-485&nbsp;(Modbus).<br>
+&nbsp;<br>
+Protected&nbsp;attributes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;_latency_time(int):&nbsp;additional&nbsp;delay,&nbsp;in&nbsp;ms,&nbsp;between&nbsp;request&nbsp;and&nbsp;response&nbsp;(default:&nbsp;30).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;_wait_time(int):&nbsp;total&nbsp;delay,&nbsp;in&nbsp;ms,&nbsp;between&nbsp;request&nbsp;and&nbsp;response&nbsp;(_latency_time&nbsp;+&nbsp;3.5&nbsp;characters).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;_last_req_time(float):&nbsp;time&nbsp;when&nbsp;last&nbsp;request&nbsp;was&nbsp;issued.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;_dev_id(int):&nbsp;device&nbsp;ID&nbsp;(default:&nbsp;1).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;_ser(serial.rs485.RS485):&nbsp;Modbus&nbsp;driver&nbsp;instance.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="MX2-__init__"><strong>__init__</strong></a>(self, port: str = '', baud_rate: int = 9600, parity: str = 'N') -&gt; None</dt><dd><tt>Constructor.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#MX2-port">port</a>(str):&nbsp;logical&nbsp;path&nbsp;of&nbsp;RS-485&nbsp;device&nbsp;(default:&nbsp;"").<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#MX2-baud_rate">baud_rate</a>(int):&nbsp;serial&nbsp;baud&nbsp;rate&nbsp;(default:&nbsp;9600).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#MX2-parity">parity</a>(str):&nbsp;serial&nbsp;parity&nbsp;(default:&nbsp;serial.PARITY_NONE).</tt></dd></dl>
+
+<dl><dt><a name="MX2-close"><strong>close</strong></a>(self) -&gt; None</dt><dd><tt>Close&nbsp;serial&nbsp;connection&nbsp;with&nbsp;<a href="#MX2">MX2</a>&nbsp;inverter.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;SerialException:&nbsp;if&nbsp;connection&nbsp;is&nbsp;not&nbsp;open.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;SerialException:&nbsp;if&nbsp;connection&nbsp;couldn't&nbsp;be&nbsp;closed.</tt></dd></dl>
+
+<dl><dt><a name="MX2-get_baud_rate"><strong>get_baud_rate</strong></a>(self) -&gt; int</dt><dd><tt>Get&nbsp;serial&nbsp;baud&nbsp;rate.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;int:&nbsp;baud&nbsp;rate.</tt></dd></dl>
+
+<dl><dt><a name="MX2-get_device_id"><strong>get_device_id</strong></a>(self) -&gt; int</dt><dd><tt>Get&nbsp;device&nbsp;ID.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;int:&nbsp;device&nbsp;ID.</tt></dd></dl>
+
+<dl><dt><a name="MX2-get_latency_time"><strong>get_latency_time</strong></a>(self) -&gt; int</dt><dd><tt>Get&nbsp;latency&nbsp;time,&nbsp;in&nbsp;ms.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;int:&nbsp;latency&nbsp;time.</tt></dd></dl>
+
+<dl><dt><a name="MX2-get_parity"><strong>get_parity</strong></a>(self) -&gt; str</dt><dd><tt>Get&nbsp;serial&nbsp;parity.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;str:&nbsp;serial&nbsp;parity.</tt></dd></dl>
+
+<dl><dt><a name="MX2-get_port"><strong>get_port</strong></a>(self) -&gt; str</dt><dd><tt>Get&nbsp;path&nbsp;of&nbsp;RS-485&nbsp;device&nbsp;port.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;str:&nbsp;port&nbsp;path.</tt></dd></dl>
+
+<dl><dt><a name="MX2-get_stop_bits"><strong>get_stop_bits</strong></a>(self) -&gt; int</dt><dd><tt>Get&nbsp;number&nbsp;of&nbsp;stop&nbsp;bits.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;int:&nbsp;number&nbsp;of&nbsp;stop&nbsp;bits.</tt></dd></dl>
+
+<dl><dt><a name="MX2-loopback_test"><strong>loopback_test</strong></a>(self) -&gt; None</dt><dd><tt>Perform&nbsp;a&nbsp;loopback&nbsp;test.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadRequestException:&nbsp;if&nbsp;device&nbsp;ID&nbsp;is&nbsp;a&nbsp;broadcast&nbsp;address.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseLengthException:&nbsp;if&nbsp;response&nbsp;length&nbsp;isn't&nbsp;8.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseException:&nbsp;if&nbsp;response&nbsp;data&nbsp;differs&nbsp;from&nbsp;request.</tt></dd></dl>
+
+<dl><dt><a name="MX2-open"><strong>open</strong></a>(self) -&gt; None</dt><dd><tt>Open&nbsp;serial&nbsp;connection&nbsp;with&nbsp;<a href="#MX2">MX2</a>&nbsp;inverter.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;SerialException:&nbsp;if&nbsp;connection&nbsp;is&nbsp;already&nbsp;open.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;SerialException:&nbsp;if&nbsp;connection&nbsp;couldn't&nbsp;be&nbsp;opened.</tt></dd></dl>
+
+<dl><dt><a name="MX2-read_and_write_registers"><strong>read_and_write_registers</strong></a>(self, read_start_address: mx2.enums.Register, write_start_address: mx2.enums.Register, read_count: int, write_values: 'list[int]') -&gt; bytes</dt><dd><tt>Read&nbsp;from&nbsp;and&nbsp;write&nbsp;to&nbsp;one&nbsp;or&nbsp;more&nbsp;registers&nbsp;at&nbsp;once.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;read_start_address(Register):&nbsp;address&nbsp;of&nbsp;1st&nbsp;register&nbsp;to&nbsp;read.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;write_start_address(Register):&nbsp;address&nbsp;of&nbsp;1st&nbsp;register&nbsp;to&nbsp;set.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;read_count(int):&nbsp;number&nbsp;of&nbsp;registers&nbsp;to&nbsp;query,&nbsp;from&nbsp;1&nbsp;to&nbsp;16.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;values(list[int]):&nbsp;register&nbsp;values&nbsp;to&nbsp;write.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;list[int]:&nbsp;the&nbsp;values&nbsp;of&nbsp;requested&nbsp;registers&nbsp;as&nbsp;a&nbsp;list&nbsp;of&nbsp;integers.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadRequestException:&nbsp;if&nbsp;device&nbsp;ID&nbsp;is&nbsp;a&nbsp;broadcast&nbsp;address.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;read&nbsp;start&nbsp;address&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;write&nbsp;start&nbsp;address&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;read_count&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;len(values)&nbsp;is&nbsp;zero&nbsp;or&nbsp;more&nbsp;than&nbsp;16.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;any&nbsp;of&nbsp;the&nbsp;values&nbsp;is&nbsp;less&nbsp;than&nbsp;0&nbsp;or&nbsp;more&nbsp;than&nbsp;65535.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseLengthException:&nbsp;if&nbsp;response&nbsp;length&nbsp;doesn't&nbsp;match&nbsp;read_count.</tt></dd></dl>
+
+<dl><dt><a name="MX2-read_coil_status"><strong>read_coil_status</strong></a>(self, start_address: mx2.enums.Coil, coil_count: int) -&gt; 'list[CoilValue]'</dt><dd><tt>Read&nbsp;the&nbsp;status&nbsp;of&nbsp;one&nbsp;or&nbsp;more&nbsp;coils.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;start_address(Coil):&nbsp;address&nbsp;of&nbsp;1st&nbsp;coil&nbsp;to&nbsp;read.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;coil_count(int):&nbsp;number&nbsp;of&nbsp;coils&nbsp;to&nbsp;query,&nbsp;between&nbsp;1&nbsp;and&nbsp;31.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;list[CoilValue]:&nbsp;the&nbsp;coil&nbsp;states&nbsp;as&nbsp;coil&nbsp;value&nbsp;objects.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadRequestException:&nbsp;if&nbsp;device&nbsp;ID&nbsp;is&nbsp;a&nbsp;broadcast&nbsp;address.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;start&nbsp;address&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;coil_count&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseLengthException:&nbsp;if&nbsp;response&nbsp;length&nbsp;is&nbsp;inconsistent&nbsp;with&nbsp;coil_count.</tt></dd></dl>
+
+<dl><dt><a name="MX2-read_fault_monitor"><strong>read_fault_monitor</strong></a>(self, index: int, value: mx2.enums.FaultMonitorData) -&gt; int</dt><dd><tt>Query&nbsp;fault&nbsp;monitor.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;index(int):&nbsp;fault&nbsp;monitor&nbsp;index&nbsp;(from&nbsp;1&nbsp;to&nbsp;6).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;value(FaultMonitorData):&nbsp;index&nbsp;of&nbsp;fault&nbsp;monitor&nbsp;data&nbsp;to&nbsp;read&nbsp;(from&nbsp;0&nbsp;to&nbsp;9,&nbsp;see&nbsp;enum).<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;int:&nbsp;fault&nbsp;monitor&nbsp;value.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;fault&nbsp;monitor&nbsp;index&nbsp;if&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;fault&nbsp;monitor&nbsp;data&nbsp;index&nbsp;is&nbsp;outside&nbsp;bounds.</tt></dd></dl>
+
+<dl><dt><a name="MX2-read_registers"><strong>read_registers</strong></a>(self, start_address: mx2.enums.Register, register_count: int) -&gt; 'list[RegisterValue]'</dt><dd><tt>Read&nbsp;the&nbsp;content&nbsp;of&nbsp;one&nbsp;or&nbsp;more&nbsp;registers.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;start_address(Register):&nbsp;address&nbsp;of&nbsp;1st&nbsp;register&nbsp;to&nbsp;read.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;register_count(int):&nbsp;number&nbsp;of&nbsp;registers&nbsp;to&nbsp;query,&nbsp;from&nbsp;1&nbsp;to&nbsp;16.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;list[RegisterValue]:&nbsp;register&nbsp;values&nbsp;as&nbsp;a&nbsp;list&nbsp;of&nbsp;RegisterValue&nbsp;objects.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadRequestException:&nbsp;if&nbsp;device&nbsp;ID&nbsp;is&nbsp;a&nbsp;broadcast&nbsp;address.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;start&nbsp;address&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;register&nbsp;count&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseLengthException:&nbsp;if&nbsp;response&nbsp;length&nbsp;doesn't&nbsp;match&nbsp;register&nbsp;count.</tt></dd></dl>
+
+<dl><dt><a name="MX2-set_baud_rate"><strong>set_baud_rate</strong></a>(self, baud_rate: int) -&gt; None</dt><dd><tt>Set&nbsp;serial&nbsp;baud&nbsp;rate.&nbsp;Can&nbsp;take&nbsp;the&nbsp;following&nbsp;values:<br>
+&nbsp;&nbsp;&nbsp;2400,&nbsp;4800,&nbsp;9600,&nbsp;19200,&nbsp;38400,&nbsp;57600,&nbsp;76800,&nbsp;115200.<br>
+Must&nbsp;match&nbsp;setting&nbsp;C071&nbsp;of&nbsp;<a href="#MX2">MX2</a>&nbsp;inverter.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#MX2-baud_rate">baud_rate</a>(int):&nbsp;serial&nbsp;baud&nbsp;rate.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;SerialException:&nbsp;if&nbsp;connection&nbsp;is&nbsp;already&nbsp;open.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;baud&nbsp;rate&nbsp;is&nbsp;invalid.</tt></dd></dl>
+
+<dl><dt><a name="MX2-set_device_id"><strong>set_device_id</strong></a>(self, dev_id: int) -&gt; None</dt><dd><tt>Set&nbsp;device&nbsp;ID.&nbsp;This&nbsp;can&nbsp;be&nbsp;between&nbsp;1&nbsp;and&nbsp;247&nbsp;for<br>
+single&nbsp;device&nbsp;or&nbsp;between&nbsp;250&nbsp;and&nbsp;254&nbsp;for&nbsp;broadcast&nbsp;and<br>
+must&nbsp;match&nbsp;setting&nbsp;C072&nbsp;of&nbsp;<a href="#MX2">MX2</a>&nbsp;inverter.</tt></dd></dl>
+
+<dl><dt><a name="MX2-set_latency_time"><strong>set_latency_time</strong></a>(self, latency_time: int) -&gt; None</dt><dd><tt>Set&nbsp;latency&nbsp;time,&nbsp;betweeen&nbsp;0&nbsp;and&nbsp;1000&nbsp;ms.<br>
+Must&nbsp;be&nbsp;at&nbsp;least&nbsp;as&nbsp;much&nbsp;as&nbsp;setting&nbsp;C078&nbsp;of&nbsp;<a href="#MX2">MX2</a>&nbsp;inverter.<br>
+In&nbsp;case&nbsp;device&nbsp;returns&nbsp;no&nbsp;data,&nbsp;try&nbsp;increasing&nbsp;this.</tt></dd></dl>
+
+<dl><dt><a name="MX2-set_parity"><strong>set_parity</strong></a>(self, parity: str) -&gt; None</dt><dd><tt>Set&nbsp;serial&nbsp;parity.&nbsp;Can&nbsp;be&nbsp;serial.PARITY_NONE,<br>
+serial.PARITY_EVEN,&nbsp;serial.PARITY_ODD.<br>
+Must&nbsp;match&nbsp;setting&nbsp;C074&nbsp;of&nbsp;<a href="#MX2">MX2</a>&nbsp;inverter.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#MX2-parity">parity</a>(str):&nbsp;serial&nbsp;parity.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;SerialException:&nbsp;if&nbsp;connection&nbsp;is&nbsp;already&nbsp;open.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;parity&nbsp;is&nbsp;not&nbsp;amongst&nbsp;allowed&nbsp;values.</tt></dd></dl>
+
+<dl><dt><a name="MX2-set_port"><strong>set_port</strong></a>(self, port: str) -&gt; None</dt><dd><tt>Set&nbsp;path&nbsp;of&nbsp;RS-485&nbsp;device&nbsp;port.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#MX2-port">port</a>(str):&nbsp;logical&nbsp;path&nbsp;of&nbsp;RS-485&nbsp;device.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;SerialException:&nbsp;if&nbsp;connection&nbsp;is&nbsp;already&nbsp;open.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;port&nbsp;path&nbsp;is&nbsp;None.</tt></dd></dl>
+
+<dl><dt><a name="MX2-set_stop_bits"><strong>set_stop_bits</strong></a>(self, stop_bits: int) -&gt; None</dt><dd><tt>Set&nbsp;number&nbsp;of&nbsp;stop&nbsp;bits&nbsp;(either&nbsp;1&nbsp;or&nbsp;2).<br>
+Must&nbsp;match&nbsp;setting&nbsp;C075&nbsp;of&nbsp;<a href="#MX2">MX2</a>&nbsp;inverter.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#MX2-stop_bits">stop_bits</a>(int):&nbsp;number&nbsp;of&nbsp;stop&nbsp;bits.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;SerialException:&nbsp;if&nbsp;connection&nbsp;is&nbsp;already&nbsp;open.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;stop&nbsp;bit&nbsp;value&nbsp;is&nbsp;not&nbsp;1&nbsp;or&nbsp;2.</tt></dd></dl>
+
+<dl><dt><a name="MX2-write_in_coil"><strong>write_in_coil</strong></a>(self, address: mx2.enums.Coil, state: bool) -&gt; None</dt><dd><tt>Set&nbsp;the&nbsp;state&nbsp;of&nbsp;a&nbsp;coil.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;address(Coil):&nbsp;coil&nbsp;address.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;state(bool):&nbsp;state&nbsp;to&nbsp;set.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;address&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseLengthException:&nbsp;if&nbsp;response&nbsp;length&nbsp;isn't&nbsp;8.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseException:&nbsp;if&nbsp;response&nbsp;data&nbsp;differs&nbsp;from&nbsp;request.</tt></dd></dl>
+
+<dl><dt><a name="MX2-write_in_multiple_coils"><strong>write_in_multiple_coils</strong></a>(self, start_address: mx2.enums.Coil, values: 'list[bool]') -&gt; None</dt><dd><tt>Set&nbsp;the&nbsp;state&nbsp;of&nbsp;multiple&nbsp;coils&nbsp;at&nbsp;once.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;start_address(Coil):&nbsp;address&nbsp;of&nbsp;1st&nbsp;coil&nbsp;to&nbsp;set.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;values(list[bool]):&nbsp;coil&nbsp;values.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;start&nbsp;address&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;len(values)&nbsp;is&nbsp;zero&nbsp;or&nbsp;more&nbsp;than&nbsp;31.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseLengthException:&nbsp;if&nbsp;response&nbsp;length&nbsp;isn't&nbsp;8.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseException:&nbsp;if&nbsp;response&nbsp;data&nbsp;differs&nbsp;from&nbsp;request.</tt></dd></dl>
+
+<dl><dt><a name="MX2-write_in_multiple_registers"><strong>write_in_multiple_registers</strong></a>(self, start_address: mx2.enums.Register, values: 'list[int]') -&gt; None</dt><dd><tt>Set&nbsp;the&nbsp;values&nbsp;of&nbsp;multiple&nbsp;registers&nbsp;at&nbsp;once.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;start_address(Register):&nbsp;address&nbsp;of&nbsp;1st&nbsp;register&nbsp;to&nbsp;set.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;values(list[int]):&nbsp;register&nbsp;values.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;start&nbsp;address&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;len(values)&nbsp;is&nbsp;zero&nbsp;or&nbsp;more&nbsp;than&nbsp;16.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;any&nbsp;of&nbsp;the&nbsp;values&nbsp;is&nbsp;less&nbsp;than&nbsp;0&nbsp;or&nbsp;more&nbsp;than&nbsp;65535.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseLengthException:&nbsp;if&nbsp;response&nbsp;length&nbsp;isn't&nbsp;8.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseException:&nbsp;if&nbsp;response&nbsp;data&nbsp;differs&nbsp;from&nbsp;request.</tt></dd></dl>
+
+<dl><dt><a name="MX2-write_in_register"><strong>write_in_register</strong></a>(self, address: mx2.enums.Register, value: int) -&gt; None</dt><dd><tt>Set&nbsp;the&nbsp;value&nbsp;of&nbsp;a&nbsp;register.<br>
+&nbsp;<br>
+Parameters:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;address(Register):&nbsp;register&nbsp;address.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;value(int):&nbsp;value&nbsp;to&nbsp;set,&nbsp;from&nbsp;0&nbsp;to&nbsp;65535.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;address&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;value&nbsp;is&nbsp;outside&nbsp;bounds.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseLengthException:&nbsp;if&nbsp;response&nbsp;length&nbsp;isn't&nbsp;8.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;BadResponseException:&nbsp;if&nbsp;response&nbsp;data&nbsp;differs&nbsp;from&nbsp;request.</tt></dd></dl>
+
+<hr>
+Readonly properties defined here:<br>
+<dl><dt><strong>is_open</strong></dt>
+</dl>
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>baud_rate</strong></dt>
+<dd><tt>Get&nbsp;serial&nbsp;baud&nbsp;rate.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;int:&nbsp;baud&nbsp;rate.</tt></dd>
+</dl>
+<dl><dt><strong>device_id</strong></dt>
+<dd><tt>Get&nbsp;device&nbsp;ID.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;int:&nbsp;device&nbsp;ID.</tt></dd>
+</dl>
+<dl><dt><strong>latency_time</strong></dt>
+<dd><tt>Get&nbsp;latency&nbsp;time,&nbsp;in&nbsp;ms.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;int:&nbsp;latency&nbsp;time.</tt></dd>
+</dl>
+<dl><dt><strong>parity</strong></dt>
+<dd><tt>Get&nbsp;serial&nbsp;parity.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;str:&nbsp;serial&nbsp;parity.</tt></dd>
+</dl>
+<dl><dt><strong>port</strong></dt>
+<dd><tt>Get&nbsp;path&nbsp;of&nbsp;RS-485&nbsp;device&nbsp;port.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;str:&nbsp;port&nbsp;path.</tt></dd>
+</dl>
+<dl><dt><strong>stop_bits</strong></dt>
+<dd><tt>Get&nbsp;number&nbsp;of&nbsp;stop&nbsp;bits.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;int:&nbsp;number&nbsp;of&nbsp;stop&nbsp;bits.</tt></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>__all__</strong> = ['MX2']</td></tr></table>
+</body></html>

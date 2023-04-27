@@ -102,15 +102,144 @@ class Coil(enum.IntEnum):
     SecondMotorSelected = 0x56
     GateSuppressMonitor = 0x58
 
+    def __repr__(self) -> str:
+        return "<{}.{}: 0x{:02x}>".format(self.__class__.__name__, self._name_, self.value)
 
-class Register(enum.IntEnum):
+    def next(self, n_items=1):
+        if n_items<0:
+            raise ValueError("Item count must be positive or zero.")
+        if n_items==0:
+            return [self]
+        i_start = self._member_names_.index(self.name)+1
+        i_end = min(len(self._member_names_), i_start + n_items)
+        return [self._member_map_[self._member_names_[i]] for i in range(i_start, i_end)]
+    
+    @staticmethod
+    def contains(value:int):
+        for k in Coil._member_map_:
+            if Coil._member_map_[k].value == value:
+                return Coil._member_map_[k]
+        return None
+
+
+class Register(enum.Enum):
     """Base enum class for register address."""
-    pass
+
+    def __init__(self, address:int, n_words:int=1) -> None:
+        """Constructor.
+
+        Parameters:
+            address(int): register address (between 0 and 0xffff).
+            n_words(int): number of words; must be larger than 0 (default: 1).
+        
+        Raises:
+            ValueError: if address is out of bounds.
+            ValueError: if n_words is less than 1.
+        """
+        if address<0 or address>0xffff:
+            raise ValueError("Register address out of bounds.")
+        if n_words<=0:
+            raise ValueError("Number of words must be strictly positive.")
+        self.address = address
+        self.n_words = n_words
+    
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Register):
+            return other.address == self.address and other.n_words == self.n_words
+        elif isinstance(other, int):
+            return other == self.address
+        else:
+            return False
+    
+    def __add__(self, other) -> int:
+        if isinstance(other, int):
+            candidates = self.next(other)
+            for c in candidates:
+                if c.address == self.address + other:
+                    return c
+            return self.address + other
+        else:
+            raise TypeError("Register address can only be incremented by integer values.")
+
+    def __sub__(self, other) -> int:
+        if isinstance(other, int):
+            return self.address - other
+        else:
+            raise TypeError("Register address can only be decremented by integer values.")
+    
+    def __le__(self, other) -> bool:
+        if isinstance(other, Register):
+            return self.address <= other.address
+        elif isinstance(other, int):
+            return self.address <= other
+
+    def __lt__(self, other) -> bool:
+        if isinstance(other, Register):
+            return self.address < other.address
+        elif isinstance(other, int):
+            return self.address < other
+
+    def __gt__(self, other) -> bool:
+        if isinstance(other, Register):
+            return self.address > other.address
+        elif isinstance(other, int):
+            return self.address > other
+
+    def __ge__(self, other) -> bool:
+        if isinstance(other, Register):
+            return self.address >= other.address
+        elif isinstance(other, int):
+            return self.address >= other
+    
+    def __lshift__(self, amount:int) -> int:
+        if isinstance(amount, int):
+            return self.address << amount
+        else:
+            raise TypeError("Register address can only be shifted by integer values.")
+
+    def __rshift__(self, amount:int) -> int:
+        if isinstance(amount, int):
+            return self.address >> amount
+        else:
+            raise TypeError("Register address can only be shifted by integer values.")
+
+    def __and__(self, value:int) -> int:
+        if isinstance(value, int):
+            return self.address & value
+        else:
+            raise TypeError("Bitwise AND operation on register address can only occur with integer values.")
+
+    def __or__(self, value:int) -> int:
+        if isinstance(value, int):
+            return self.address | value
+        else:
+            raise TypeError("Bitwise OR operation on register address can only occur with integer values.")
+
+    def __repr__(self) -> str:
+        return "<{}.{}: (0x{:02x}, {})>".format(self.__class__.__name__, self._name_, self.address, self.n_words)
+    
+    def next(self, n_items=1):
+        if n_items<0:
+            raise ValueError("Item count must be positive or zero.")
+        if n_items==0:
+            return [self]
+        i_start = self._member_names_.index(self.name)+1
+        i_end = min(len(self._member_names_), i_start + n_items)
+        return [self._member_map_[self._member_names_[i]] for i in range(i_start, i_end)]
+
+    @staticmethod
+    def contains(cls, value:int):
+        for k in cls._member_map_:
+            if cls._member_map_[k].address == value:
+                return cls._member_map_[k]
+        return None
 
 
 class ModbusRegisters(Register):
     """Modbus-only registers. These registers aren't accessible
     through the keypad interface (datasheet section B-4, pp. 318 and 320)."""
+    def contains(value:int):
+        return Register.contains(ModbusRegisters, value)
     InverterStatusA = 0x0003
     InverterStatusB = 0x0004
     InverterStatusC = 0x0005
@@ -122,6 +251,8 @@ class ModbusRegisters(Register):
 class StandardFunctions(Register):
     """Standard function group. See datasheet
     sections 3-5 (pp. 90-120) and B-4 (pp. 324-327)."""
+    def contains(value:int):
+        return Register.contains(StandardFunctions, value)
     # A group
     FrequencyReferenceSelection = 0x1201
     A001 = 0x1201
@@ -133,14 +264,10 @@ class StandardFunctions(Register):
     A004 = 0x1204
     IOVoltageCurrentSelection = 0x1205
     A005 = 0x1205
-    VoltageStartFrequencyH = 0x120B
-    VoltageStartFrequencyL = 0x120C
-    A011H = 0x120B
-    A011L = 0x120C
-    VoltageEndFrequencyH = 0x120D
-    VoltageEndFrequencyL = 0x120E
-    A012H = 0x120D
-    A012L = 0x120E
+    VoltageStartFrequency = (0x120B, 2)
+    A011 = (0x120B, 2)
+    VoltageEndFrequency = (0x120D, 2)
+    A012 = (0x120D, 2)
     VoltageStartRatio = 0x120F
     A013 = 0x120F
     VoltageEndRatio = 0x1210
@@ -153,70 +280,38 @@ class StandardFunctions(Register):
     A017 = 0x1213
     MultiStepSpeedSelection = 0x1215
     A019 = 0x1215
-    MultiStepSpeedReference0H = 0x1216
-    MultiStepSpeedReference0L = 0x1217
-    A020H = 0x1216
-    A020L = 0x1217
-    MultiStepSpeedReference1H = 0x1218
-    MultiStepSpeedReference1L = 0x1219
-    A021H = 0x1218
-    A021L = 0x1219
-    MultiStepSpeedReference2H = 0x121A
-    MultiStepSpeedReference2L = 0x121B
-    A022H = 0x121A
-    A022L = 0x121B
-    MultiStepSpeedReference3H = 0x121C
-    MultiStepSpeedReference3L = 0x121D
-    A023H = 0x121C
-    A023L = 0x121D
-    MultiStepSpeedReference4H = 0x121E
-    MultiStepSpeedReference4L = 0x121F
-    A024H = 0x121E
-    A024L = 0x121F
-    MultiStepSpeedReference5H = 0x1220
-    MultiStepSpeedReference5L = 0x1221
-    A025H = 0x1220
-    A025L = 0x1221
-    MultiStepSpeedReference6H = 0x1222
-    MultiStepSpeedReference6L = 0x1223
-    A026H = 0x1222
-    A026L = 0x1223
-    MultiStepSpeedReference7H = 0x1224
-    MultiStepSpeedReference7L = 0x1225
-    A027H = 0x1224
-    A027L = 0x1225
-    MultiStepSpeedReference8H = 0x1226
-    MultiStepSpeedReference8L = 0x1227
-    A028H = 0x1226
-    A028L = 0x1227
-    MultiStepSpeedReference9H = 0x1228
-    MultiStepSpeedReference9L = 0x1229
-    A029H = 0x1228
-    A029L = 0x1229
-    MultiStepSpeedReference10H = 0x122A
-    MultiStepSpeedReference10L = 0x122B
-    A030H = 0x122A
-    A030L = 0x122B
-    MultiStepSpeedReference11H = 0x122C
-    MultiStepSpeedReference11L = 0x122D
-    A031H = 0x122C
-    A031L = 0x122D
-    MultiStepSpeedReference12H = 0x122E
-    MultiStepSpeedReference12L = 0x122F
-    A032H = 0x122E
-    A032L = 0x122F
-    MultiStepSpeedReference13H = 0x1230
-    MultiStepSpeedReference13L = 0x1231
-    A033H = 0x1230
-    A033L = 0x1231
-    MultiStepSpeedReference14H = 0x1232
-    MultiStepSpeedReference14L = 0x1233
-    A034H = 0x1232
-    A034L = 0x1233
-    MultiStepSpeedReference15H = 0x1234
-    MultiStepSpeedReference15L = 0x1235
-    A035H = 0x1234
-    A035L = 0x1235
+    MultiStepSpeedReference0 = (0x1216, 2)
+    A020 = (0x1216, 2)
+    MultiStepSpeedReference1 = (0x1218, 2)
+    A021 = (0x1218, 2)
+    MultiStepSpeedReference2 = (0x121A, 2)
+    A022 = (0x121A, 2)
+    MultiStepSpeedReference3 = (0x121C, 2)
+    A023 = (0x121C, 2)
+    MultiStepSpeedReference4 = (0x121E, 2)
+    A024 = (0x121E, 2)
+    MultiStepSpeedReference5 = (0x1220, 2)
+    A025 = (0x1220, 2)
+    MultiStepSpeedReference6 = (0x1222, 2)
+    A026 = (0x1222, 2)
+    MultiStepSpeedReference7 = (0x1224, 2)
+    A027 = (0x1224, 2)
+    MultiStepSpeedReference8 = (0x1226, 2)
+    A028 = (0x1226, 2)
+    MultiStepSpeedReference9 = (0x1228, 2)
+    A029 = (0x1228, 2)
+    MultiStepSpeedReference10 = (0x122A, 2)
+    A030 = (0x122A, 2)
+    MultiStepSpeedReference11 = (0x122C, 2)
+    A031 = (0x122C, 2)
+    MultiStepSpeedReference12 = (0x122E, 2)
+    A032 = (0x122E, 2)
+    MultiStepSpeedReference13 = (0x1230, 2)
+    A033 = (0x1230, 2)
+    MultiStepSpeedReference14 = (0x1232, 2)
+    A034 = (0x1232, 2)
+    MultiStepSpeedReference15 = (0x1234, 2)
+    A035 = (0x1234, 2)
     JoggingFrequency = 0x1238
     A038 = 0x1238
     JoggingStopSelection = 0x1239
@@ -253,36 +348,24 @@ class StandardFunctions(Register):
     A058 = 0x124C
     DCInjectionBrakingCarrierFrequency = 0x124D
     A059 = 0x124D
-    FrequencyUpperLimitH = 0x124F
-    FrequencyUpperLimitL = 0x1250
-    A061H = 0x124F
-    A061L = 0x1250
-    FrequencyLowerLimitH = 0x1251
-    FrequencyLowerLimitL = 0x1252
-    A062H = 0x1251
-    A062L = 0x1252
-    JumpFrequency1H = 0x1253
-    JumpFrequency1L = 0x1254
-    A063H = 0x1253
-    A063L = 0x1254
+    FrequencyUpperLimit = (0x124F, 2)
+    A061 = (0x124F, 2)
+    FrequencyLowerLimit = (0x1251, 2)
+    A062 = (0x1251, 2)
+    JumpFrequency1 = (0x1253, 2)
+    A063 = (0x1253, 2)
     JumpFrequencyWidth1 = 0x1255
     A064 = 0x1255
-    JumpFrequency2H = 0x1256
-    JumpFrequency2L = 0x1257
-    A065H = 0x1256
-    A065L = 0x1257
+    JumpFrequency2 = (0x1256, 2)
+    A065 = (0x1256, 2)
     JumpFrequencyWidth2 = 0x1258
     A066 = 0x1258
-    JumpFrequency3H = 0x1259
-    JumpFrequency3L = 0x125A
-    A067H = 0x1259
-    A067L = 0x125A
+    JumpFrequency3 = (0x1259, 2)
+    A067 = (0x1259, 2)
     JumpFrequencyWidth3 = 0x125B
     A068 = 0x125B
-    AccelerationStopFrequencyH = 0x125C
-    AccelerationStopFrequencyL = 0x125D
-    A069H = 0x125C
-    A069L = 0x125D
+    AccelerationStopFrequency = (0x125C, 2)
+    A069 = (0x125C, 2)
     AccelerationStopTime = 0x125E
     A070 = 0x125E
     PIDSelection = 0x125F
@@ -315,36 +398,24 @@ class StandardFunctions(Register):
     A085 = 0x126D
     EnergySavingResponseAccuracyAdjustment = 0x126E
     A086 = 0x126E
-    AccelerationTime2H = 0x1274
-    AccelerationTime2L = 0x1275
-    A092H = 0x1274
-    A092L = 0x1275
-    DecelerationTime2H = 0x1276
-    DecelerationTime2L = 0x1277
-    A093H = 0x1276
-    A093L = 0x1277
+    AccelerationTime2 = (0x1274, 2)
+    A092 = (0x1274, 2)
+    DecelerationTime2 = (0x1276, 2)
+    A093 = (0x1276, 2)
     MethodToSwitchToAcc2Dec2 = 0x1278
     A094 = 0x1278
-    Acc1ToAcc2FrequencyTransitionPointH = 0x1279
-    Acc1ToAcc2FrequencyTransitionPointL = 0x127A
-    A095H = 0x1279
-    A095L = 0x127A
-    Dec1ToDec2FrequencyTransitionPointH = 0x127B
-    Dec1ToDec2FrequencyTransitionPointL = 0x127C
-    A096H = 0x127B
-    A096L = 0x127C
+    Acc1ToAcc2FrequencyTransitionPoint = (0x1279, 2)
+    A095 = (0x1279, 2)
+    Dec1ToDec2FrequencyTransitionPoint = (0x127B, 2)
+    A096 = (0x127B, 2)
     AccelerationCurveSelection = 0x127D
     A097 = 0x127D
     DecelerationCurveSelection = 0x127E
     A098 = 0x127E
-    CurrentInputActiveRangeStartFrequencyH = 0x1281
-    CurrentInputActiveRangeStartFrequencyL = 0x1282
-    A101H = 0x1281
-    A101L = 0x1282
-    CurrentInputActiveRangeEndFrequencyH = 0x1283
-    CurrentInputActiveRangeEndFrequencyL = 0x1284
-    A102H = 0x1283
-    A102L = 0x1284
+    CurrentInputActiveRangeStartFrequency = (0x1281, 2)
+    A101 = (0x1281, 2)
+    CurrentInputActiveRangeEndFrequency = (0x1283, 2)
+    A102 = (0x1283, 2)
     CurrentInputActiveRangeStartRatio = 0x1285
     A103 = 0x1285
     CurrentInputActiveRangeEndRatio = 0x1286
@@ -361,10 +432,8 @@ class StandardFunctions(Register):
     A142 = 0x12B0
     OperationSelection = 0x12B1
     A143 = 0x12B1
-    FrequencyAdditionAmountH = 0x12B3
-    FrequencyAdditionAmountL = 0x12B4
-    A145H = 0x12B3
-    A145L = 0x12B4
+    FrequencyAdditionAmount = (0x12B3, 2)
+    A145 = (0x12B3, 2)
     FrequencyAdditionDirection = 0x12B5
     A146 = 0x12B5
     ELSCurveRatio1DuringAcceleration = 0x12B9
@@ -375,26 +444,18 @@ class StandardFunctions(Register):
     A152 = 0x12BB
     ELSCurveRatio2DuringDeceleration = 0x12BC
     A153 = 0x12BC
-    DecelerationHoldFrequencyH = 0x12BD
-    DecelerationHoldFrequencyL = 0x12BE
-    A154H = 0x12BD
-    A154L = 0x12BE
+    DecelerationHoldFrequency = (0x12BD, 2)
+    A154 = (0x12BD, 2)
     DecelerationHoldTime = 0x12BF
     A155 = 0x12BF
-    PIDSleepFunctionActionThresholdH = 0x12C0
-    PIDSleepFunctionActionThresholdL = 0x12C1
-    A156H = 0x12C0
-    A156L = 0x12C1
+    PIDSleepFunctionActionThreshold = (0x12C0, 2)
+    A156 = (0x12C0, 2)
     PIDSleepFunctionActionDelayTime = 0x12C2
     A157 = 0x12C2
-    VRInputActiveRangeStartFrequencyH = 0x12C6
-    VRInputActiveRangeStartFrequencyL = 0x12C7
-    A161H = 0x12C6
-    A161L = 0x12C7
-    VRInputActiveRangeEndFrequencyH = 0x12C8
-    VRInputActiveRangeEndFrequencyL = 0x12C9
-    A162H = 0x12C8
-    A162L = 0x12C9
+    VRInputActiveRangeStartFrequency = (0x12C6, 2)
+    A161 = (0x12C6, 2)
+    VRInputActiveRangeEndFrequency = (0x12C8, 2)
+    A162 = (0x12C8, 2)
     VRInputActiveRangeStartCurrent = 0x12CA
     A163 = 0x12CA
     VRInputActiveRangeEndVoltage = 0x12CB
@@ -406,6 +467,8 @@ class StandardFunctions(Register):
 class FineTuningFunctions(Register):
     """Fine tuning function group. See datasheet
     sections 3-6 (pp. 121-153) and B-4 (pp. 328-331)."""
+    def contains(value:int):
+        return Register.contains(FineTuningFunctions, value)
     # B group
     RetrySelection = 0x1301
     B001 = 0x1301
@@ -417,10 +480,8 @@ class FineTuningFunctions(Register):
     B004 = 0x1304
     MomentaryPowerInterruptionRetryTimeSelection = 0x1305
     B005 = 0x1305
-    FrequencyMatchingLowerLimitH = 0x1307
-    FrequencyMatchingLowerLimitL = 0x1308
-    B007H = 0x1307
-    B007L = 0x1308
+    FrequencyMatchingLowerLimit = (0x1307, 2)
+    B007 = (0x1307, 2)
     TripRetrySelection = 0x1309
     B008 = 0x1309
     OvervoltageRetryTimeSelection = 0x130B
@@ -467,10 +528,8 @@ class FineTuningFunctions(Register):
     B031 = 0x1320
     MotorCableLengthParameter = 0x1322
     B033 = 0x1322
-    PowerOnTimeSettingH = 0x1323
-    PowerOnTimeSettingL = 0x1324
-    B034H = 0x1323
-    B034L = 0x1324
+    PowerOnTimeSetting = (0x1323, 2)
+    B034 = (0x1323, 2)
     RotationDirectionLimitSelection = 0x1325
     B035 = 0x1325
     ReducedVoltageStartupSelection = 0x1326
@@ -503,10 +562,8 @@ class FineTuningFunctions(Register):
     B051 = 0x1335
     StopDecelerationLevelOfNonStopFunction = 0x1336
     B052 = 0x1336
-    DecelerationTimeOfNonStopFunctionH = 0x1337
-    DecelerationTimeOfNonStopFunctionL = 0x1338
-    B053H = 0x1337
-    B053L = 0x1338
+    DecelerationTimeOfNonStopFunction = (0x1337, 2)
+    B053 = (0x1337, 2)
     DecelerationStartingWidthOfNonStopFunction = 0x1339
     B054 = 0x1339
     WindowComparatorUpperVoltageLevel = 0x133F
@@ -639,14 +696,10 @@ class FineTuningFunctions(Register):
     B180 = 0x13B7
     ThermalDecrementMode = 0x13C6
     B910 = 0x13C6
-    ThermalDecrementTimeH = 0x13C7
-    ThermalDecrementTimeL = 0x13C8
-    B911H = 0x13C7
-    B911L = 0x13C8
-    ThermalDecrementTimeConstantH = 0x13C9
-    ThermalDecrementTimeConstantL = 0x13CA
-    B912H = 0x13C9
-    B912L = 0x13CA
+    ThermalDecrementTime = (0x13C7, 2)
+    B911 = (0x13C7, 2)
+    ThermalDecrementTimeConstant = (0x13C9, 2)
+    B912 = (0x13C9, 2)
     ThermalAccumulatorGain = 0x13CB
     B913 = 0x13CB
 
@@ -654,6 +707,8 @@ class FineTuningFunctions(Register):
 class IntelligentTerminalFunctions(Register):
     """Intelligent terminal function group. See datasheet
     sections 3-7 (pp. 153-171) and B-4 (pp. 332-336)."""
+    def contains(value:int):
+        return Register.contains(IntelligentTerminalFunctions, value)
     # C group
     MultiFunctionInput1Function = 0x1401
     C001 = 0x1401
@@ -709,24 +764,16 @@ class IntelligentTerminalFunctions(Register):
     C040 = 0x1428
     OverloadWarningLevel = 0x1429
     C041 = 0x1429
-    TargetFrequencyDuringAccelerationH = 0x142A
-    TargetFrequencyDuringAccelerationL = 0x142B
-    C042H = 0x142A
-    C042L = 0x142B
-    TargetFrequencyDuringDecelerationH = 0x142C
-    TargetFrequencyDuringDecelerationL = 0x142D
-    C043H = 0x142C
-    C043L = 0x142D
+    TargetFrequencyDuringAcceleration = (0x142A, 2)
+    C042 = (0x142A, 2)
+    TargetFrequencyDuringDeceleration = (0x142C, 2)
+    C043 = (0x142C, 2)
     PIDDeviationExcessiveLevel = 0x142E
     C044 = 0x142E
-    TargetFrequencyDuringAcceleration2H = 0x142F
-    TargetFrequencyDuringAcceleration2L = 0x1430
-    C045H = 0x142F
-    C045L = 0x1430
-    TargetFrequencyDuringDeceleration2H = 0x1431
-    TargetFrequencyDuringDeceleration2L = 0x1432
-    C046H = 0x1431
-    C046L = 0x1432
+    TargetFrequencyDuringAcceleration2 = (0x142F, 2)
+    C045 = (0x142F, 2)
+    TargetFrequencyDuringDeceleration2 = (0x1431, 2)
+    C046 = (0x1431, 2)
     EOOutputPulseTrainScaleConversion = 0x1433
     C047 = 0x1433
     PIDFeedbackUpperLimit = 0x1438
@@ -848,31 +895,25 @@ class IntelligentTerminalFunctions(Register):
 class MonitoringFunctions(Register):
     """Intelligent terminal function group. See datasheet
     sections 3-3 (pp. 74-88) and B-4 (pp. 319-320 and 322-323)."""
+    def contains(value:int):
+        return Register.contains(MonitoringFunctions, value)
     # D group
-    OutputFrequencyH = 0x1001
-    OutputFrequencyL = 0x1002
-    D001H = 0x1001
-    D001L = 0x1002
+    OutputFrequency = (0x1001, 2)
+    D001 = (0x1001, 2)
     OutputCurrent = 0x1003
     D002 = 0x1003
     RotationDirection = 0x1004
     D003 = 0x1004
-    PIDFeedbackValueH = 0x1005
-    PIDFeedbackValueL = 0x1006
-    D004H = 0x1005
-    D004L = 0x1006
+    PIDFeedbackValue = (0x1005, 2)
+    D004 = (0x1005, 2)
     MultiFunctionInputs = 0x1007
     D005 = 0x1007
     MultiFunctionOutputs = 0x1008
     D006 = 0x1008
-    ConvertedOutputFrequencyH = 0x1009
-    ConvertedOutputFrequencyL = 0x100A
-    D007H = 0x1009
-    D007L = 0x100A
-    RealFrequencyH = 0x100B
-    RealFrequencyL = 0x100C
-    D008H = 0x100B
-    D008L = 0x100C
+    ConvertedOutputFrequency = (0x1009, 2)
+    D007 = (0x1009, 2)
+    RealFrequency = (0x100B, 2)
+    D008 = (0x100B, 2)
     TorqueReference = 0x100D
     D009 = 0x100D
     TorqueBias = 0x100E
@@ -883,18 +924,12 @@ class MonitoringFunctions(Register):
     D013 = 0x1011
     InputPower = 0x1012
     D014 = 0x1012
-    WattHourH = 0x1013
-    WattHourL = 0x1014
-    D015H = 0x1013
-    D015L = 0x1014
-    TotalRunTimeH = 0x1015
-    TotalRunTimeL = 0x1016
-    D016H = 0x1015
-    D016L = 0x1016
-    PowerOnTimeH = 0x1017
-    PowerOnTimeL = 0x1018
-    D017H = 0x1017
-    D017L = 0x1018
+    WattHour = (0x1013, 2)
+    D015 = (0x1013, 2)
+    TotalRunTime = (0x1015, 2)
+    D016 = (0x1015, 2)
+    PowerOnTime = (0x1017, 2)
+    D017 = (0x1017, 2)
     FinTemperature = 0x1019
     D018 = 0x1019
     LifeAssessment = 0x101D
@@ -903,26 +938,16 @@ class MonitoringFunctions(Register):
     D023 = 0x101E
     ProgramNumber = 0x101F
     D024 = 0x101F
-    DriveProgramming0H = 0x102E
-    DriveProgramming0L = 0x102F
-    D025H = 0x102E
-    D025L = 0x102F
-    DriveProgramming1H = 0x1030
-    DriveProgramming1L = 0x1031
-    D026H = 0x1030
-    D026L = 0x1031
-    DriveProgramming2H = 0x1032
-    DriveProgramming2L = 0x1033
-    D027H = 0x1032
-    D027L = 0x1033
-    PositionCommandH = 0x1036
-    PositionCommandL = 0x1037
-    D029H = 0x1036
-    D029L = 0x1037
-    CurrentPositionH = 0x1038
-    CurrentPositionL = 0x1039
-    D030H = 0x1038
-    D030L = 0x1039
+    DriveProgramming0 = (0x102E, 2)
+    D025 = (0x102E, 2)
+    DriveProgramming1 = (0x1030, 2)
+    D026 = (0x1030, 2)
+    DriveProgramming2 = (0x1032, 2)
+    D027 = (0x1032, 2)
+    PositionCommand = (0x1036, 2)
+    D029 = (0x1036, 2)
+    CurrentPosition = (0x1038, 2)
+    D030 = (0x1038, 2)
     InverterMode = 0x1057
     D060 = 0x1057
     FrequencySource = 0x1059
@@ -932,17 +957,59 @@ class MonitoringFunctions(Register):
     FaultFrequencyMonitor = 0x0011
     D080 = 0x0011
     FaultMonitor1 = 0x0012
+    FaultMonitor1Factor = 0x0012
     D081 = 0x0012
+    FaultMonitor1InverterStatus = 0x0013
+    FaultMonitor1Frequency = (0x0014, 2)
+    FaultMonitor1Current = 0x0016
+    FaultMonitor1Voltage = 0x0017
+    FaultMonitor1RunningTime = (0x0018, 2)
+    FaultMonitor1PowerOnTime = (0x001A, 2)
     FaultMonitor2 = 0x001C
+    FaultMonitor2Factor = 0x001C
     D082 = 0x001C
+    FaultMonitor2InverterStatus = 0x001D
+    FaultMonitor2Frequency = (0x001E, 2)
+    FaultMonitor2Current = 0x0020
+    FaultMonitor2Voltage = 0x0021
+    FaultMonitor2RunningTime = (0x0022, 2)
+    FaultMonitor2PowerOnTime = (0x0024, 2)
     FaultMonitor3 = 0x0026
+    FaultMonitor3Factor = 0x0026
     D083 = 0x0026
+    FaultMonitor3InverterStatus = 0x0027
+    FaultMonitor3Frequency = (0x0028, 2)
+    FaultMonitor3Current = 0x002A
+    FaultMonitor3Voltage = 0x002B
+    FaultMonitor3RunningTime = (0x002C, 2)
+    FaultMonitor3PowerOnTime = (0x002E, 2)
     FaultMonitor4 = 0x0030
+    FaultMonitor4Factor = 0x0030
     D084 = 0x0030
+    FaultMonitor4InverterStatus = 0x0031
+    FaultMonitor4Frequency = (0x0032, 2)
+    FaultMonitor4Current = 0x0034
+    FaultMonitor4Voltage = 0x0035
+    FaultMonitor4RunningTime = (0x0036, 2)
+    FaultMonitor4PowerOnTime = (0x0038, 2)
     FaultMonitor5 = 0x003A
+    FaultMonitor5Factor = 0x003A
     D085 = 0x003A
+    FaultMonitor5InverterStatus = 0x003B
+    FaultMonitor5Frequency = (0x003C, 2)
+    FaultMonitor5Current = 0x003E
+    FaultMonitor5Voltage = 0x003F
+    FaultMonitor5RunningTime = (0x0040, 2)
+    FaultMonitor5PowerOnTime = (0x0042, 2)
     FaultMonitor6 = 0x0044
+    FaultMonitor6Factor = 0x0044
     D086 = 0x0044
+    FaultMonitor6InverterStatus = 0x0045
+    FaultMonitor6Frequency = (0x0046, 2)
+    FaultMonitor6Current = 0x0048
+    FaultMonitor6Voltage = 0x0049
+    FaultMonitor6RunningTime = (0x004A, 2)
+    FaultMonitor6PowerOnTime = (0x004C, 2)
     WarningMonitor = 0x004E
     D090 = 0x004E
     DCVoltage = 0x1026
@@ -966,34 +1033,28 @@ class MonitoringFunctions(Register):
 class MainProfileParameters(Register):
     """Main profile parameters group. See datasheet
     sections 3-4 (p. 89) and B-4 (pp. 319-320, 322-323 and 344)."""
+    def contains(value:int):
+        return Register.contains(MainProfileParameters, value)
     # F group
-    OutputFrequencyH = 0x0001
-    OutputFrequencyL = 0x0002
-    F001H = 0x0001
-    F001L = 0x0002
-    AccelerationTime1H = 0x1103
-    AccelerationTime1L = 0x1104
-    F002H = 0x1103
-    F002L = 0x1104
-    DecelerationTime1H = 0x1105
-    DecelerationTime1L = 0x1106
-    F003H = 0x1105
-    F003L = 0x1106
+    OutputFrequency = (0x0001, 2)
+    F001 = (0x0001, 2)
+    AccelerationTime1 = (0x1103, 2)
+    F002 = (0x1103, 2)
+    DecelerationTime1 = (0x1105, 2)
+    F003 = (0x1105, 2)
     OperatorRotationDirection = 0x1107
     F004 = 0x1107
-    SecondAccelerationTime1H = 0x2103
-    SecondAccelerationTime1L = 0x2104
-    F202H = 0x2103
-    F202L = 0x2104
-    SecondDecelerationTime1H = 0x2105
-    SecondDecelerationTime1L = 0x2106
-    F203H = 0x2105
-    F203L = 0x2106
+    SecondAccelerationTime1 = (0x2103, 2)
+    F202 = (0x2103, 2)
+    SecondDecelerationTime1 = (0x2105, 2)
+    F203 = (0x2105, 2)
 
 
 class MotorConstantsFunctions(Register):
     """Motor constants function group. See datasheet
     sections 3-8 (pp. 172-178) and B-4 (pp. 337-338)."""
+    def contains(value:int):
+        return Register.contains(MotorConstantsFunctions, value)
     # H group
     AutoTuningSelection = 0x1501
     H001 = 0x1501
@@ -1011,26 +1072,20 @@ class MotorConstantsFunctions(Register):
     H020 = 0x1516
     MotorParameterR2 = 0x1518
     H021 = 0x1518
-    MotorParameterL = 0x151A
     H022 = 0x151A
     MotorParameterIo = 0x151C
     H023 = 0x151C
-    MotorParameterJH = 0x151D
-    MotorParameterJL = 0x151E
-    H024H = 0x151D
-    H024L = 0x151E
+    MotorParameterJ = (0x151D, 2)
+    H024 = (0x151D, 2)
     AutoTuningParameterR1 = 0x1525
     H030 = 0x1525
     AutoTuningParameterR2 = 0x1527
     H031 = 0x1527
-    AutoTuningParameterL = 0x1529
     H032 = 0x1529
     AutoTuningParameterIo = 0x152B
     H033 = 0x152B
-    AutoTuningParameterJH = 0x152C
-    AutoTuningParameterJL = 0x152D
-    H034H = 0x152C
-    H034L = 0x152D
+    AutoTuningParameterJ = (0x152C, 2)
+    H034 = (0x152C, 2)
     SlipCompensationPGain = 0x153D
     H050 = 0x153D
     SlipCompensationIGain = 0x153E
@@ -1051,10 +1106,8 @@ class MotorConstantsFunctions(Register):
     H108 = 0x1577
     PMParameterKe = 0x1578
     H109 = 0x1578
-    PMParameterJH = 0x1579
-    PMParameterJL = 0x157A
-    H110H = 0x1579
-    H110L = 0x157A
+    PMParameterJ = (0x1579, 2)
+    H110 = (0x1579, 2)
     AutoTuningPMParameterR = 0x157B
     H111 = 0x157B
     AutoTuningPMParameterLd = 0x157C
@@ -1088,6 +1141,8 @@ class MotorConstantsFunctions(Register):
 class OtherParameters(Register):
     """Other parameters group. See datasheet
     sections 3-9 (pp. 179-190) and B-4 (pp. 339-343)."""
+    def contains(value:int):
+        return Register.contains(OtherParameters, value)
     # P group
     OperationSelectionAtOption1Error = 0x1601
     P001 = 0x1601
@@ -1119,14 +1174,10 @@ class OtherParameters(Register):
     P037 = 0x1625
     TorqueBiasPolaritySelection = 0x1626
     P038 = 0x1626
-    ForwardTorqueControlSpeedLimitValueH = 0x1627
-    ForwardTorqueControlSpeedLimitValueL = 0x1628
-    P039H = 0x1627
-    P039L = 0x1628
-    ReverseTorqueControlSpeedLimitValueH = 0x1629
-    ReverseTorqueControlSpeedLimitValueL = 0x162A
-    P040H = 0x1629
-    P040L = 0x162A
+    ForwardTorqueControlSpeedLimitValue = (0x1627, 2)
+    P039 = (0x1627, 2)
+    ReverseTorqueControlSpeedLimitValue = (0x1629, 2)
+    P040 = (0x1629, 2)
     SpeedTorqueControlSwitchingTime = 0x162B
     P041 = 0x162B
     NetworkCommunicationWatchdogTimer = 0x162E
@@ -1149,38 +1200,22 @@ class OtherParameters(Register):
     P058 = 0x163C
     PulseInputLowerCut = 0x163D
     P059 = 0x163D
-    MultiStepPositionCommand0H = 0x163E
-    MultiStepPositionCommand0L = 0x163F
-    P060H = 0x163E
-    P060L = 0x163F
-    MultiStepPositionCommand1H = 0x1640
-    MultiStepPositionCommand1L = 0x1641
-    P061H = 0x1640
-    P061L = 0x1641
-    MultiStepPositionCommand2H = 0x1642
-    MultiStepPositionCommand2L = 0x1643
-    P062H = 0x1642
-    P062L = 0x1643
-    MultiStepPositionCommand3H = 0x1644
-    MultiStepPositionCommand3L = 0x1645
-    P063H = 0x1644
-    P063L = 0x1645
-    MultiStepPositionCommand4H = 0x1646
-    MultiStepPositionCommand4L = 0x1647
-    P064H = 0x1646
-    P064L = 0x1647
-    MultiStepPositionCommand5H = 0x1648
-    MultiStepPositionCommand5L = 0x1649
-    P065H = 0x1648
-    P065L = 0x1649
-    MultiStepPositionCommand6H = 0x164A
-    MultiStepPositionCommand6L = 0x164B
-    P066H = 0x164A
-    P066L = 0x164B
-    MultiStepPositionCommand7H = 0x164C
-    MultiStepPositionCommand7L = 0x164D
-    P067H = 0x164C
-    P067L = 0x164D
+    MultiStepPositionCommand0 = (0x163E, 2)
+    P060 = (0x163E, 2)
+    MultiStepPositionCommand1 = (0x1640, 2)
+    P061 = (0x1640, 2)
+    MultiStepPositionCommand2 = (0x1642, 2)
+    P062 = (0x1642, 2)
+    MultiStepPositionCommand3 = (0x1644, 2)
+    P063 = (0x1644, 2)
+    MultiStepPositionCommand4 = (0x1646, 2)
+    P064 = (0x1646, 2)
+    MultiStepPositionCommand5 = (0x1648, 2)
+    P065 = (0x1648, 2)
+    MultiStepPositionCommand6 = (0x164A, 2)
+    P066 = (0x164A, 2)
+    MultiStepPositionCommand7 = (0x164C, 2)
+    P067 = (0x164C, 2)
     ZeroReturnMode = 0x164E
     P068 = 0x164E
     ZeroReturnDirection = 0x164F
@@ -1189,14 +1224,10 @@ class OtherParameters(Register):
     P070 = 0x1650
     HighSpeedZeroReturnFrequency = 0x1651
     P071 = 0x1651
-    ForwardPositionRangeSpecificationH = 0x1652
-    ForwardPositionRangeSpecificationL = 0x1653
-    P072H = 0x1652
-    P072L = 0x1653
-    ReversePositionRangeSpecificationH = 0x1654
-    ReversePositionRangeSpecificationL = 0x1655
-    P073H = 0x1654
-    P073L = 0x1655
+    ForwardPositionRangeSpecification = (0x1652, 2)
+    P072 = (0x1652, 2)
+    ReversePositionRangeSpecification = (0x1654, 2)
+    P073 = (0x1654, 2)
     PositioningMode = 0x1657
     P075 = 0x1657
     EncoderDisconnectionTimeout = 0x1659
@@ -1448,6 +1479,8 @@ class OtherParameters(Register):
 class SecondMotorFunctions(Register):
     """Second motor function group. See datasheet
     sections 3-x and B-4 (pp. 344-346)."""
+    def contains(value:int):
+        return Register.contains(SecondMotorFunctions, value)
     # A group
     FrequencyReferenceSelection = 0x2201
     A201 = 0x2201
@@ -1457,10 +1490,8 @@ class SecondMotorFunctions(Register):
     A203 = 0x2203
     MaximumFrequency = 0x2204
     A204 = 0x2204
-    MultiStepSpeedReference0H = 0x2216
-    MultiStepSpeedReference0L = 0x2217
-    A220H = 0x2216
-    A220L = 0x2217
+    MultiStepSpeedReference0 = (0x2216, 2)
+    A220 = (0x2216, 2)
     TorqueBoostSelection = 0x223B
     A241 = 0x223B
     ManualTorqueBoostVoltage = 0x223C
@@ -1475,36 +1506,24 @@ class SecondMotorFunctions(Register):
     A246 = 0x2240
     AutomaticTorqueBoostSlipCompensationGain = 0x2241
     A247 = 0x2241
-    FrequencyUpperLimitH = 0x224F
-    FrequencyUpperLimitL = 0x2250
-    A261H = 0x224F
-    A261L = 0x2250
-    FrequencyLowerLimitH = 0x2251
-    FrequencyLowerLimitL = 0x2252
-    A262H = 0x2251
-    A262L = 0x2252
+    FrequencyUpperLimit = (0x224F, 2)
+    A261 = (0x224F, 2)
+    FrequencyLowerLimit = (0x2251, 2)
+    A262 = (0x2251, 2)
     AVRSelection = 0x2269
     A281 = 0x2269
     AVRVoltageSelection = 0x226A
     A282 = 0x226A
-    AccelerationTime2H = 0x2274
-    AccelerationTime2L = 0x2275
-    A292H = 0x2274
-    A292L = 0x2275
-    DecelerationTime2H = 0x2276
-    DecelerationTime2L = 0x2277
-    A293H = 0x2276
-    A293L = 0x2277
+    AccelerationTime2 = (0x2274, 2)
+    A292 = (0x2274, 2)
+    DecelerationTime2 = (0x2276, 2)
+    A293 = (0x2276, 2)
     MethodToSwitchToAcc2Dec2 = 0x2278
     A294 = 0x2278
-    Acc1ToAcc2FrequencyTransitionPointH = 0x2279
-    Acc1ToAcc2FrequencyTransitionPointL = 0x227A
-    A295H = 0x2279
-    A295L = 0x227A
-    Dec1ToDec2FrequencyTransitionPointH = 0x227B
-    Dec1ToDec2FrequencyTransitionPointL = 0x227C
-    A296H = 0x227B
-    A296L = 0x227C
+    Acc1ToAcc2FrequencyTransitionPoint = (0x2279, 2)
+    A295 = (0x2279, 2)
+    Dec1ToDec2FrequencyTransitionPoint = (0x227B, 2)
+    A296 = (0x227B, 2)
     # B group
     ElectronicThermalLevel = 0x230C
     B212 = 0x230C
@@ -1532,26 +1551,20 @@ class SecondMotorFunctions(Register):
     H220 = 0x2516
     MotorParameterR2 = 0x2518
     H221 = 0x2518
-    MotorParameterL = 0x251A
     H222 = 0x251A
     MotorParameterIo = 0x251C
     H223 = 0x251C
-    MotorParameterJH = 0x251D
-    MotorParameterJL = 0x251E
-    H224H = 0x251D
-    H224L = 0x251E
+    MotorParameterJ = (0x251D, 2)
+    H224 = (0x251D, 2)
     AutoTuningParameterR1 = 0x2525
     H230 = 0x2525
     AutoTuningParameterR2 = 0x2527
     H231 = 0x2527
-    AutoTuningParameterL = 0x2529
     H232 = 0x2529
     AutoTuningParameterIo = 0x252B
     H233 = 0x252B
-    AutoTuningParameterJH = 0x252C
-    AutoTuningParameterJL = 0x252D
-    H234H = 0x252C
-    H234L = 0x252D
+    AutoTuningParameterJ = (0x252C, 2)
+    H234 = (0x252C, 2)
 
 
 class FaultMonitorData(enum.IntEnum):

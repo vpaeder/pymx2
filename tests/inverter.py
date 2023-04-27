@@ -47,7 +47,7 @@ class TestInverter(unittest.TestCase):
         self.mx._dev_id = 8
         self.mx._ser.read.return_value = bytes([8, 1, 1, 5, 0x92, 0x17])
         self.assertEqual(self.mx.read_coil_status(Coil.OperationCommand, 5),
-                         [True, False, True, False, False, False, False, False])
+                         [True, False, True, False, False])
     
     def test_read_coil_status_fail(self):
         with self.assertRaises(BadParameterException):
@@ -69,8 +69,8 @@ class TestInverter(unittest.TestCase):
     def test_read_registers_ok(self):
         self.mx._dev_id = 1
         self.mx._ser.read.return_value = bytes([1, 3, 0x0C, 0, 3, 0, 0, 0, 0x63, 0, 0, 0, 0x1E, 1, 0x1C, 0xAF, 0x6D])
-        self.assertEqual(self.mx.read_registers(MonitoringFunctions.FaultFrequencyMonitor, 6),
-                         [3, 0, 0x63, 0, 0x1E, 0x011C])
+        self.assertEqual(self.mx.read_registers(MonitoringFunctions.FaultFrequencyMonitor, 5),
+                         [3, 0, 0x63, 0x1E, 0x011C])
 
     def test_read_registers_fail(self):
         self.mx._dev_id = 1
@@ -110,7 +110,10 @@ class TestInverter(unittest.TestCase):
     def test_write_in_register_ok(self):
         self.mx._dev_id = 8
         self.mx._ser.read.return_value = bytes([8, 6, 0x12, 0x15, 1, 0xF4, 0x9D, 0xF8])
-        self.mx.write_in_register(StandardFunctions.A020H, 0x01f4)
+        self.mx.write_in_register(StandardFunctions.A020, 0x01f4)
+        # same but with value larger than 1 word => call write_in_multiple_registers
+        self.mx._ser.read.return_value = bytes([8, 0x10, 0x12, 0x15, 0, 2, 0x55, 0xED])
+        self.mx.write_in_register(StandardFunctions.A020, 65536)
 
     def test_write_in_register_fail(self):
         with self.assertRaises(BadParameterException):
@@ -118,16 +121,16 @@ class TestInverter(unittest.TestCase):
         with self.assertRaises(BadParameterException):
             self.mx.write_in_register(65536, 0x01f4)
         with self.assertRaises(BadParameterException):
-            self.mx.write_in_register(StandardFunctions.A020H, -1)
+            self.mx.write_in_register(StandardFunctions.A020, -1)
         with self.assertRaises(BadParameterException):
-            self.mx.write_in_register(StandardFunctions.A020H, 65536)
+            self.mx.write_in_register(StandardFunctions.A001, 65536)
         self.mx._dev_id = 8
         self.mx._ser.read.return_value = bytes([8, 6, 0x12, 0x15, 0xF4, 0x6A, 0x5B])
         with self.assertRaises(BadResponseLengthException):
-            self.mx.write_in_register(StandardFunctions.A020H, 0x01f4)
+            self.mx.write_in_register(StandardFunctions.A020, 0x01f4)
         self.mx._ser.read.return_value = bytes([8, 6, 0x12, 0x15, 0, 0xF4, 0x9C, 0x68])
         with self.assertRaises(BadResponseException):
-            self.mx.write_in_register(StandardFunctions.A020H, 0x01f4)
+            self.mx.write_in_register(StandardFunctions.A020, 0x01f4)
 
     def test_write_in_multiple_coils_ok(self):
         self.mx._dev_id = 8
@@ -154,7 +157,8 @@ class TestInverter(unittest.TestCase):
     def test_write_in_multiple_registers_ok(self):
         self.mx._dev_id = 8
         self.mx._ser.read.return_value = bytes([8, 0x10, 0x11, 2, 0, 2, 0xE5, 0xAD])
-        self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1H, [4, 0x93E0])
+        self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1, [0x0493E0])
+        
 
     def test_write_in_multiple_registers_fail(self):
         self.mx._dev_id = 8
@@ -163,70 +167,70 @@ class TestInverter(unittest.TestCase):
         with self.assertRaises(BadParameterException):
             self.mx.write_in_multiple_registers(65536, [0, 0])
         with self.assertRaises(BadParameterException):
-            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1H, [])
+            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1, [])
         with self.assertRaises(BadParameterException):
-            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1H, [0]*17)
+            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1, [0]*17)
         with self.assertRaises(BadParameterException):
-            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1H, [-1])
+            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1, [-1])
         with self.assertRaises(BadParameterException):
-            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1H, [65536])
+            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1, [2**32])
         self.mx._ser.read.return_value = bytes([8, 0x10, 0x11, 2, 0, 0x90, 0x64])
         with self.assertRaises(BadResponseLengthException):
-            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1H, [4, 0x93E0])
+            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1, [4, 0x93E0])
         self.mx._ser.read.return_value = bytes([8, 0x10, 0x11, 2, 0, 3, 0x24, 0x6D])
         with self.assertRaises(BadResponseException):
-            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1H, [4, 0x93E0])
+            self.mx.write_in_multiple_registers(MainProfileParameters.AccelerationTime1, [4, 0x93E0])
 
     def test_read_and_write_registers_ok(self):
         self.mx._dev_id = 1
         self.mx._ser.read.return_value = bytes([1, 0x17, 4, 0, 0, 0x13, 0x88, 0xF4, 0x71])
-        self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH,
-                                         MainProfileParameters.OutputFrequencyH,
-                                         2, [0, 0x1388])
+        self.assertEqual(self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency,
+                                                          MainProfileParameters.OutputFrequency,
+                                                          1, [0x1388]), [0x1388])
 
     def test_read_and_write_registers_fail(self):
         self.mx._dev_id = 1
         with self.assertRaises(BadParameterException):
-            self.mx.read_and_write_registers(0, MainProfileParameters.OutputFrequencyH, 2, [0, 0x1388])
+            self.mx.read_and_write_registers(0, MainProfileParameters.OutputFrequency, 2, [0, 0x1388])
         with self.assertRaises(BadParameterException):
-            self.mx.read_and_write_registers(65536, MainProfileParameters.OutputFrequencyH, 2, [0, 0x1388])
+            self.mx.read_and_write_registers(65536, MainProfileParameters.OutputFrequency, 2, [0, 0x1388])
         with self.assertRaises(BadParameterException):
-            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH, 0, 2, [0, 0x1388])
+            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency, 0, 2, [0, 0x1388])
         with self.assertRaises(BadParameterException):
-            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH, 65536, 2, [0, 0x1388])
+            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency, 65536, 2, [0, 0x1388])
         with self.assertRaises(BadParameterException):
-            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH,
-                                             MainProfileParameters.OutputFrequencyH,
+            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency,
+                                             MainProfileParameters.OutputFrequency,
                                              0, [0, 0x1388])
         with self.assertRaises(BadParameterException):
-            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH,
-                                             MainProfileParameters.OutputFrequencyH,
+            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency,
+                                             MainProfileParameters.OutputFrequency,
                                              17, [0, 0x1388])
         with self.assertRaises(BadParameterException):
-            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH,
-                                             MainProfileParameters.OutputFrequencyH,
+            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency,
+                                             MainProfileParameters.OutputFrequency,
                                              2, [])
         with self.assertRaises(BadParameterException):
-            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH,
-                                             MainProfileParameters.OutputFrequencyH,
+            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency,
+                                             MainProfileParameters.OutputFrequency,
                                              2, [0]*17)
         with self.assertRaises(BadParameterException):
-            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH,
-                                             MainProfileParameters.OutputFrequencyH,
+            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency,
+                                             MainProfileParameters.OutputFrequency,
                                              2, [-1])
         with self.assertRaises(BadParameterException):
-            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH,
-                                             MainProfileParameters.OutputFrequencyH,
+            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency,
+                                             MainProfileParameters.OutputFrequency,
                                              2, [65536])
         self.mx._ser.read.return_value = bytes([1, 0x17, 4, 0, 0, 0x13, 0x35, 0x34])
         with self.assertRaises(BadResponseLengthException):
-            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH,
-                                             MainProfileParameters.OutputFrequencyH,
-                                             2, [0, 0x1388])
+            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency,
+                                             MainProfileParameters.OutputFrequency,
+                                             1, [0x1388])
         self.mx._dev_id = 0xFA # 1st broadcast range
         with self.assertRaises(BadRequestException):
-            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequencyH,
-                                             MainProfileParameters.OutputFrequencyH,
+            self.mx.read_and_write_registers(MonitoringFunctions.OutputFrequency,
+                                             MainProfileParameters.OutputFrequency,
                                              2, [0, 0x1388])
 
     def test_read_fault_monitor_fail(self):

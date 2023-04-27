@@ -29,18 +29,29 @@ This is a python driver to communicate with an Omron MX2 inverter through Modbus
   - MotorConstantsFunctions: H group registers (pp. 172-178)
   - OtherParameters: P group registers (pp. 179-190)
   - SecondMotorFunctions: registers from different groups assigned to 2nd motor configuration
+- Data types to handle returned values and keep tracks of associated coils and registers:
+  - CoilValue: holds a reference to a coil address and a boolean value
+  - RegisterValue: holds a reference to a register address and an integer value
 
-There are so many separate coils and registers that I didn't find appropriate to create a class method for each of them. Exception is made for fault monitors as accessing them is a bit specific. This means that 32bit data must be handled manually. Several examples are provided (see [examples](examples) folder).
+There are so many separate coils and registers that I didn't find appropriate to create a class method for each of them. Allowed values and units for each register can be found in the relevant datasheet pages. Register sizes are handled automatically.
+An exception is made for fault monitors, for which as specific class method is provided.
+Several examples are available in the [examples](examples) folder.
+API documentation can be found within the code or in the *docs* folder (see [below](#api)).
+Don't hesitate to report bugs [here](https://github.com/vpaeder/pymx2/issues).
 
 ## Setup
 
 From command line, use:
 
-    python -m setup.py install
+```bash
+python -m setup.py install
+```
 
 or for Linux/OSX:
 
-    sudo python -m setup.py install
+```bash
+sudo python -m setup.py install
+```
 
 ## Examples
 
@@ -50,7 +61,9 @@ See [examples](examples) folder.
 
 The [tests](tests) folder contains unit tests for most of the aspects of this package. To run them, use:
 
-    python -m unittest
+```bash
+python -m unittest
+```
 
 ## API
 
@@ -59,7 +72,7 @@ You can find docs in the [docs](docs) folder (generated from python docstrings).
 1) either from the command line, use pydoc:
 
 ```bash
-pydoc mx2
+python -m pydoc mx2
 ```
 
 2) or from within python:

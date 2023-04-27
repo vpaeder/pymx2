@@ -18,6 +18,7 @@ __all__ = ["MX2"]
 
 from .enums import FunctionCode, ExceptionCode, Coil, Register, MonitoringFunctions, FaultMonitorData
 from .exceptions import *
+from .types import CoilValue, RegisterValue
 
 
 def crc16(data:bytes) -> bytes:
@@ -48,14 +49,14 @@ class MX2():
     using RS-485 (Modbus).
     
     Protected attributes:
-        _latency_time(int): additional delay, in ms, between request and response.
+        _latency_time(int): additional delay, in ms, between request and response (default: 30).
         _wait_time(int): total delay, in ms, between request and response (_latency_time + 3.5 characters).
         _last_req_time(float): time when last request was issued.
-        _dev_id(int): device ID.
+        _dev_id(int): device ID (default: 1).
         _ser(serial.rs485.RS485): Modbus driver instance.
     """
-    _latency_time = 5
-    _wait_time = 5 + int(3500/9600)
+    _latency_time = 30
+    _wait_time = 30 + int(11*3500/9600)
     _last_req_time = 0
     _dev_id = 1
     _ser = None
@@ -124,7 +125,7 @@ class MX2():
             raise SerialException("Connection is currently open.")
         if baud_rate in [2400, 4800, 9600, 19200, 38400, 57600, 76800, 115200]:
             self._ser.baudrate = baud_rate
-            self._wait_time = self._latency_time + int(3500/baud_rate)
+            self._wait_time = self._latency_time + int(11*3500/baud_rate)
         else:
             raise BadParameterException("Invalid baud rate.")
     
@@ -227,11 +228,12 @@ class MX2():
     
     def set_latency_time(self, latency_time:int) -> None:
         """Set latency time, betweeen 0 and 1000 ms.
-        Must match setting C078 of MX2 inverter.
+        Must be at least as much as setting C078 of MX2 inverter.
+        In case device returns no data, try increasing this.
         """
         if latency_time>=0 and latency_time<=1000:
             self._latency_time = latency_time
-            self._wait_time = latency_time + int(3500/self._ser.baudrate)
+            self._wait_time = latency_time + int(11*3500/self._ser.baudrate)
         else:
             raise BadParameterException("Latency can be between 0 and 1000 ms.")
     
@@ -286,9 +288,9 @@ class MX2():
         if rem_time<=0:
             return
         sleep(rem_time)
-    
 
-    def _read(self) -> bytes|None:
+
+    def _read(self) -> bytes:
         """Read incoming bytes.
         
         Returns:
@@ -352,7 +354,7 @@ class MX2():
                 raise BadResponseException("Data issued for incorrect function code.")
     
 
-    def read_coil_status(self, start_address:Coil, coil_count:int) -> 'list[bool]':
+    def read_coil_status(self, start_address:Coil, coil_count:int) -> 'list[CoilValue]':
         """Read the status of one or more coils.
 
         Parameters:
@@ -360,7 +362,7 @@ class MX2():
             coil_count(int): number of coils to query, between 1 and 31.
         
         Returns:
-            list[bool]: the coil states as boolean values.
+            list[CoilValue]: the coil states as coil value objects.
         
         Raises:
             BadRequestException: if device ID is a broadcast address.
@@ -389,12 +391,54 @@ class MX2():
             raise BadResponseLengthException("Incorrect response length for coil status request.")
         
         result = list()
+        # reformat results as list of booleans
         for v in response[3+response[2]-1:2:-1]:
             result += [True if b=="1" else False for b in "{:08b}".format(v)[::-1]]
-        return result
-        
+        # generate a list of (coil, value) pairs excluding invalid addresses
+        addr = start_address
+        values = list()
+        for r in result:
+            if Coil.contains(addr.value):
+                values.append(CoilValue(addr, r))
+                addr = addr.next()[0]
+                if addr is None:
+                    break
+                if len(values) == coil_count:
+                    break
+        return values
+    
 
-    def read_registers(self, start_address:Register, register_count:int) -> 'list[int]':
+    def __format_register_values(self, start_address:Register, data:bytes) -> 'list[RegisterValue]':
+        """Format a byte string into a list of register values matching register sizes.
+        
+        Parameters:
+            start_address(Register): address of 1st register to read.
+            data(bytes): byte string to convert.
+        
+        Returns:
+            list[RegisterValue]: the converted list of register values.
+        """
+        reg_cls = start_address.__class__
+        addr = start_address
+        nb = addr.n_words
+        values = list()
+        value = 0
+        for v in [(data[n] << 8) + data[n+1] for n in range(0,len(data),2)]:
+            if reg_cls.contains(addr.address):
+                nb-=1
+                value += v << (16*nb)
+                if nb==0:
+                    values.append(RegisterValue(addr, value))
+                    value = 0
+                    try:
+                        addr = addr.next()[0]
+                    except IndexError:
+                        break
+                    nb = addr.n_words
+        return values
+
+
+    def read_registers(self, start_address:Register, register_count:int) -> 'list[RegisterValue]':
         """Read the content of one or more registers.
 
         Parameters:
@@ -402,7 +446,7 @@ class MX2():
             register_count(int): number of registers to query, from 1 to 16.
         
         Returns:
-            list[int]: register values as a list of integers.
+            list[RegisterValue]: register values as a list of RegisterValue objects.
 
         Raises:
             BadRequestException: if device ID is a broadcast address.
@@ -417,20 +461,28 @@ class MX2():
         if register_count<1 or register_count>16:
             raise BadParameterException("Invalid register count (must be between 1 and 16).")
 
+        if isinstance(start_address, Register):
+            last_reg = start_address.next(register_count-1)[-1]
+            word_count = last_reg.address - start_address.address + last_reg.n_words
+            if word_count > 16:
+                BadParameterException("Register count spans a too large address range.")
+        else:
+            word_count = register_count
+        
         self._send(FunctionCode.ReadHoldingRegister, bytes([
             (start_address-1) >> 8,
             (start_address-1) & 0xff,
             0,
-            register_count
+            word_count
         ]))
         self._wait()
         response = self._read()
 
         self.__check_validity(FunctionCode.ReadHoldingRegister, response)
-        if len(response)!=5+register_count*2:
+        if len(response)!=5+word_count*2:
             raise BadResponseLengthException("Incorrect response length for register content request.")
         
-        return [(response[n] << 8) + response[n+1] for n in range(3,3+response[2],2)]
+        return self.__format_register_values(start_address, response[3:3+word_count*2])
 
 
     def write_in_coil(self, address:Coil, state:bool) -> None:
@@ -482,6 +534,9 @@ class MX2():
         """
         if address<1 or address>0xffff:
             raise BadParameterException("Address out of range (must be between 1 and 0xffff).")
+        # if value is too large for 1 word but address is a Register object and n_words=2, we use write_in_multiple_registers instead
+        if value>0xffff and  isinstance(address, Register) and address.n_words>1:
+                return self.write_in_multiple_registers(address, [value])
         if value<0 or value>0xffff:
             raise BadParameterException("Value out of range (must be between 0 and 65535).")
         
@@ -546,7 +601,6 @@ class MX2():
             raise BadParameterException("Invalid data array length (must be between 1 and 31).")
         
         nbytes = min(4, int(len(values)/8) + 1)
-        end_address = start_address + len(values)
         intval = sum([((1 if values[n] else 0) << (len(values)-n-1)) for n in range(len(values))])
         msg = bytes([
             0,
@@ -571,6 +625,34 @@ class MX2():
             raise BadResponseException("Response content differs from command content.")
     
 
+    def __prepare_for_writing(self, start_address:Register, values:'list[int]') -> bytes:
+        """Convert a list of integers into a byte string matching register sizes.
+        
+        Parameters:
+            start_address(Register): address of 1st register.
+            values(list[int]): values to convert.
+        
+        Returns:
+            bytes: the converted byte string.
+        
+        Raises:
+            BadParameterException: if any value if out of range.
+        """
+        msg = bytes()
+        if isinstance(start_address, Register):
+            regs = [start_address] + start_address.next(len(values))
+            for rv in zip(regs, values):
+                if rv[1]<0 or rv[1]>=(1 << 16*rv[0].n_words):
+                    raise BadParameterException("Value out of range.")
+                msg += rv[1].to_bytes(2*rv[0].n_words, 'big')
+        else:
+            for v in values:
+                if v<0 or v>0xffff:
+                    raise BadParameterException("Value out of range (must be between 0 and 65535).")
+                msg += bytes([v >> 8, v & 0xff])
+        return msg
+
+
     def write_in_multiple_registers(self, start_address:Register, values:'list[int]') -> None:
         """Set the values of multiple registers at once.
 
@@ -589,19 +671,24 @@ class MX2():
             raise BadParameterException("Start address out of range (must be between 1 and 0xffff).")
         if len(values)==0 or len(values)>16:
             raise BadParameterException("Invalid data array length (must be between 1 and 16).")
-        for v in values:
-            if v<0 or v>0xffff:
-                raise BadParameterException("Value out of range (must be between 0 and 65535).")
+        
+        if isinstance(start_address, Register):
+            last_reg = start_address.next(len(values)-1)[-1]
+            word_count = last_reg.address - start_address.address + last_reg.n_words
+            if word_count > 16:
+                raise BadParameterException("Register count spans a too large address range.")
+        else:
+            word_count = len(values)
 
         msg = bytes([
             (start_address-1) >> 8,
             (start_address-1) & 0xff,
             0,
-            len(values),
-            2*len(values)
+            word_count,
+            2*word_count
         ])
-        for v in values:
-            msg += bytes([v >> 8, v & 0xff])
+
+        msg += self.__prepare_for_writing(start_address, values)
         
         self._send(FunctionCode.WriteInRegisters, msg)
         if self._dev_id > 249: # broadcast
@@ -651,30 +738,47 @@ class MX2():
             if v<0 or v>0xffff:
                 raise BadParameterException("Value out of range (must be between 0 and 65535).")
         
+        if isinstance(read_start_address, Register):
+            last_reg = read_start_address.next(read_count-1)[-1]
+            read_word_count = last_reg.address - read_start_address.address + last_reg.n_words
+            if read_word_count > 16:
+                BadParameterException("Register count spans a too large address range.")
+        else:
+            read_word_count = read_count
+
+        if isinstance(write_start_address, Register):
+            last_reg = write_start_address.next(len(write_values)-1)[-1]
+            write_word_count = last_reg.address - write_start_address.address + last_reg.n_words
+            if write_word_count > 16:
+                raise BadParameterException("Register count spans a too large address range.")
+        else:
+            write_word_count = len(write_values)
+
         msg = bytes([
             (read_start_address-1) >> 8,
             (read_start_address-1) & 0xff,
             0,
-            read_count,
+            read_word_count,
             (write_start_address-1) >> 8,
             (write_start_address-1) & 0xff,
             0,
-            len(write_values),
-            2*len(write_values)
+            write_word_count,
+            2*write_word_count
         ])
-        for v in write_values:
-            msg += bytes([v >> 8, v & 0xff])
+
+        msg += self.__prepare_for_writing(write_start_address, write_values)
 
         self._send(FunctionCode.ReadWriteRegisters, msg)
         self._wait()
         response = self._read()
 
         self.__check_validity(FunctionCode.ReadWriteRegisters, response)
-        if len(response)!=5+read_count*2:
+        if len(response)!=5+read_word_count*2:
             raise BadResponseLengthException("Incorrect response length for register content request.")
         
-        return [(response[n] << 8) + response[n+1] for n in range(3,3+response[2],2)]
-    
+        return self.__format_register_values(read_start_address, response[3:3+read_word_count*2])
+
+
     def read_fault_monitor(self, index:int, value:FaultMonitorData) -> int:
         """Query fault monitor.
 
