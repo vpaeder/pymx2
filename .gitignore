@@ -1,2 +1,4 @@
 *.pyc
 __pycache__
+dist/
+pymx2.egg-info

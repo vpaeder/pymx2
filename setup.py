@@ -8,10 +8,10 @@ setuptools.setup(
     version="0.1.0",
     author="Vincent Paeder",
     author_email="python@paeder.fi",
-    description="Python driver to communicate with an Omron MX2 inverter through Modbus",
+    description="A Python driver to communicate with an Omron MX2 inverter through Modbus",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    keywords=['Omron', 'MX2'],
+    keywords=['omron', 'mx2', 'inverter'],
     url="https://github.com/vpaeder/pymx2",
     project_urls={
         "Bug Tracker": "https://github.com/vpaeder/pymx2/issues",
@@ -27,5 +27,5 @@ setuptools.setup(
         "Topic :: Communications",
         "Topic :: System :: Hardware :: Hardware Drivers"
     ],
-    python_requires='>=3.2',
+    python_requires='>=3.9',
 )
