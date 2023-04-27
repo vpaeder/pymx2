@@ -534,8 +534,8 @@ class MX2():
         """
         if address<1 or address>0xffff:
             raise BadParameterException("Address out of range (must be between 1 and 0xffff).")
-        # if value is too large for 1 word but address is a Register object and n_words=2, we use write_in_multiple_registers instead
-        if value>0xffff and  isinstance(address, Register) and address.n_words>1:
+        # if address is a Register object and n_words>1, we use write_in_multiple_registers instead
+        if isinstance(address, Register) and address.n_words>1:
                 return self.write_in_multiple_registers(address, [value])
         if value<0 or value>0xffff:
             raise BadParameterException("Value out of range (must be between 0 and 65535).")

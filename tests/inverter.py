@@ -109,9 +109,9 @@ class TestInverter(unittest.TestCase):
 
     def test_write_in_register_ok(self):
         self.mx._dev_id = 8
-        self.mx._ser.read.return_value = bytes([8, 6, 0x12, 0x15, 1, 0xF4, 0x9D, 0xF8])
-        self.mx.write_in_register(StandardFunctions.A020, 0x01f4)
-        # same but with value larger than 1 word => call write_in_multiple_registers
+        self.mx._ser.read.return_value = bytes([8, 6, 0x12, 0x02, 1, 0xF4, 0x2D, 0xFC])
+        self.mx.write_in_register(StandardFunctions.A003, 0x01f4)
+        # same but with register larger than 1 word => call write_in_multiple_registers
         self.mx._ser.read.return_value = bytes([8, 0x10, 0x12, 0x15, 0, 2, 0x55, 0xED])
         self.mx.write_in_register(StandardFunctions.A020, 65536)
 
@@ -125,12 +125,12 @@ class TestInverter(unittest.TestCase):
         with self.assertRaises(BadParameterException):
             self.mx.write_in_register(StandardFunctions.A001, 65536)
         self.mx._dev_id = 8
-        self.mx._ser.read.return_value = bytes([8, 6, 0x12, 0x15, 0xF4, 0x6A, 0x5B])
+        self.mx._ser.read.return_value = bytes([8, 6, 0x12, 0x02, 0xF4, 0x65, 0xAB])
         with self.assertRaises(BadResponseLengthException):
-            self.mx.write_in_register(StandardFunctions.A020, 0x01f4)
-        self.mx._ser.read.return_value = bytes([8, 6, 0x12, 0x15, 0, 0xF4, 0x9C, 0x68])
+            self.mx.write_in_register(StandardFunctions.A003, 0x01f4)
+        self.mx._ser.read.return_value = bytes([8, 6, 0x12, 0x02, 0, 0xF4, 0x2C, 0x6C])
         with self.assertRaises(BadResponseException):
-            self.mx.write_in_register(StandardFunctions.A020, 0x01f4)
+            self.mx.write_in_register(StandardFunctions.A003, 0x01f4)
 
     def test_write_in_multiple_coils_ok(self):
         self.mx._dev_id = 8
