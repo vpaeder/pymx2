@@ -6,7 +6,8 @@ __all__ = ["FunctionCode", "ExceptionCode", "Coil", "Register", "ModbusRegisters
            "StandardFunctions", "FineTuningFunctions", "IntelligentTerminalFunctions",
            "MonitoringFunctions", "MainProfileParameters", "MotorConstantsFunctions",
            "OtherParameters", "SecondMotorFunctions", "FaultMonitorData", "TripFactor",
-           "InverterStatus"]
+           "InverterStatus", "GroupA", "GroupB", "GroupC", "GroupD", "GroupF",
+           "GroupH", "GroupP"]
 
 class FunctionCode(enum.IntEnum):
     """Function codes (2nd byte of Modbus message).
@@ -463,6 +464,8 @@ class StandardFunctions(Register):
     VRInputStartFrequencyEnable = 0x12CC
     A165 = 0x12CC
 
+GroupA = StandardFunctions
+
 
 class FineTuningFunctions(Register):
     """Fine tuning function group. See datasheet
@@ -703,6 +706,8 @@ class FineTuningFunctions(Register):
     ThermalAccumulatorGain = 0x13CB
     B913 = 0x13CB
 
+GroupB = FineTuningFunctions
+
 
 class IntelligentTerminalFunctions(Register):
     """Intelligent terminal function group. See datasheet
@@ -891,6 +896,8 @@ class IntelligentTerminalFunctions(Register):
     MultiStepSpeedPositionDeterminationTime = 0x14AD
     C169 = 0x14AD
 
+GroupC = IntelligentTerminalFunctions
+
 
 class MonitoringFunctions(Register):
     """Intelligent terminal function group. See datasheet
@@ -1029,6 +1036,8 @@ class MonitoringFunctions(Register):
     PIDOutput = 0x10A8
     D155 = 0x10A8
 
+GroupD = MonitoringFunctions
+
 
 class MainProfileParameters(Register):
     """Main profile parameters group. See datasheet
@@ -1048,6 +1057,8 @@ class MainProfileParameters(Register):
     F202 = (0x2103, 2)
     SecondDecelerationTime1 = (0x2105, 2)
     F203 = (0x2105, 2)
+
+GroupF = MainProfileParameters
 
 
 class MotorConstantsFunctions(Register):
@@ -1136,6 +1147,8 @@ class MotorConstantsFunctions(Register):
     H133 = 0x158C
     PMIMPEVoltageGain = 0x158D
     H134 = 0x158D
+
+GroupH = MotorConstantsFunctions
 
 
 class OtherParameters(Register):
@@ -1474,6 +1487,8 @@ class OtherParameters(Register):
     P310 = 0x16F0
     Endianness = 0x16F1
     P400 = 0x16F1
+
+GroupP = OtherParameters
 
 
 class SecondMotorFunctions(Register):
