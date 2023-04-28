@@ -41,16 +41,24 @@ Don't hesitate to report bugs [here](https://github.com/vpaeder/pymx2/issues).
 
 ## Setup
 
+You can download a release from pypi using pip or clone this repository and install manually.
+
+### From pypi
+
 From command line, use:
 
 ```bash
-python -m setup.py install
+python -m pip install pymx2
 ```
 
-or for Linux/OSX:
+### From repository
+
+From command line, use:
 
 ```bash
-sudo python -m setup.py install
+git clone https://github.com/vpaeder/pymx2.git
+cd pymx2
+python -m setup.py install
 ```
 
 ## Examples
