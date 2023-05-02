@@ -59,7 +59,7 @@ using&nbsp;RS-485&nbsp;(Modbus).<br>
 &nbsp;<br>
 Protected&nbsp;attributes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;_latency_time(int):&nbsp;additional&nbsp;delay,&nbsp;in&nbsp;ms,&nbsp;between&nbsp;request&nbsp;and&nbsp;response&nbsp;(default:&nbsp;30).<br>
-&nbsp;&nbsp;&nbsp;&nbsp;_wait_time(int):&nbsp;total&nbsp;delay,&nbsp;in&nbsp;ms,&nbsp;between&nbsp;request&nbsp;and&nbsp;response&nbsp;(_latency_time&nbsp;+&nbsp;3.5&nbsp;characters).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;_wait_time(float):&nbsp;total&nbsp;delay,&nbsp;in&nbsp;s,&nbsp;between&nbsp;request&nbsp;and&nbsp;response&nbsp;(_latency_time&nbsp;+&nbsp;3.5&nbsp;characters).<br>
 &nbsp;&nbsp;&nbsp;&nbsp;_last_req_time(float):&nbsp;time&nbsp;when&nbsp;last&nbsp;request&nbsp;was&nbsp;issued.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;_dev_id(int):&nbsp;device&nbsp;ID&nbsp;(default:&nbsp;1).<br>
 &nbsp;&nbsp;&nbsp;&nbsp;_ser(serial.rs485.RS485):&nbsp;Modbus&nbsp;driver&nbsp;instance.<br>&nbsp;</tt></td></tr>
@@ -141,11 +141,11 @@ Raises:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;any&nbsp;of&nbsp;the&nbsp;values&nbsp;is&nbsp;less&nbsp;than&nbsp;0&nbsp;or&nbsp;more&nbsp;than&nbsp;65535.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;BadResponseLengthException:&nbsp;if&nbsp;response&nbsp;length&nbsp;doesn't&nbsp;match&nbsp;read_count.</tt></dd></dl>
 
-<dl><dt><a name="MX2-read_coil_status"><strong>read_coil_status</strong></a>(self, start_address: mx2.enums.Coil, coil_count: int) -&gt; 'list[CoilValue]'</dt><dd><tt>Read&nbsp;the&nbsp;status&nbsp;of&nbsp;one&nbsp;or&nbsp;more&nbsp;coils.<br>
+<dl><dt><a name="MX2-read_coil_status"><strong>read_coil_status</strong></a>(self, start_address: mx2.enums.Coil, coil_count: int = 1) -&gt; 'list[CoilValue]'</dt><dd><tt>Read&nbsp;the&nbsp;status&nbsp;of&nbsp;one&nbsp;or&nbsp;more&nbsp;coils.<br>
 &nbsp;<br>
 Parameters:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;start_address(Coil):&nbsp;address&nbsp;of&nbsp;1st&nbsp;coil&nbsp;to&nbsp;read.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;coil_count(int):&nbsp;number&nbsp;of&nbsp;coils&nbsp;to&nbsp;query,&nbsp;between&nbsp;1&nbsp;and&nbsp;31.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;coil_count(int):&nbsp;number&nbsp;of&nbsp;coils&nbsp;to&nbsp;query,&nbsp;between&nbsp;1&nbsp;and&nbsp;31&nbsp;(default:&nbsp;1).<br>
 &nbsp;<br>
 Returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;list[CoilValue]:&nbsp;the&nbsp;coil&nbsp;states&nbsp;as&nbsp;coil&nbsp;value&nbsp;objects.<br>
@@ -169,11 +169,11 @@ Raises:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;fault&nbsp;monitor&nbsp;index&nbsp;if&nbsp;outside&nbsp;bounds.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;fault&nbsp;monitor&nbsp;data&nbsp;index&nbsp;is&nbsp;outside&nbsp;bounds.</tt></dd></dl>
 
-<dl><dt><a name="MX2-read_registers"><strong>read_registers</strong></a>(self, start_address: mx2.enums.Register, register_count: int) -&gt; 'list[RegisterValue]'</dt><dd><tt>Read&nbsp;the&nbsp;content&nbsp;of&nbsp;one&nbsp;or&nbsp;more&nbsp;registers.<br>
+<dl><dt><a name="MX2-read_registers"><strong>read_registers</strong></a>(self, start_address: mx2.enums.Register, register_count: int = 1) -&gt; 'list[RegisterValue]'</dt><dd><tt>Read&nbsp;the&nbsp;content&nbsp;of&nbsp;one&nbsp;or&nbsp;more&nbsp;registers.<br>
 &nbsp;<br>
 Parameters:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;start_address(Register):&nbsp;address&nbsp;of&nbsp;1st&nbsp;register&nbsp;to&nbsp;read.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;register_count(int):&nbsp;number&nbsp;of&nbsp;registers&nbsp;to&nbsp;query,&nbsp;from&nbsp;1&nbsp;to&nbsp;16.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;register_count(int):&nbsp;number&nbsp;of&nbsp;registers&nbsp;to&nbsp;query,&nbsp;from&nbsp;1&nbsp;to&nbsp;16&nbsp;(default:&nbsp;1).<br>
 &nbsp;<br>
 Returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;list[RegisterValue]:&nbsp;register&nbsp;values&nbsp;as&nbsp;a&nbsp;list&nbsp;of&nbsp;RegisterValue&nbsp;objects.<br>
@@ -183,6 +183,11 @@ Raises:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;start&nbsp;address&nbsp;is&nbsp;outside&nbsp;bounds.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;BadParameterException:&nbsp;if&nbsp;register&nbsp;count&nbsp;is&nbsp;outside&nbsp;bounds.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;BadResponseLengthException:&nbsp;if&nbsp;response&nbsp;length&nbsp;doesn't&nbsp;match&nbsp;register&nbsp;count.</tt></dd></dl>
+
+<dl><dt><a name="MX2-save_settings_to_eeprom"><strong>save_settings_to_eeprom</strong></a>(self) -&gt; None</dt><dd><tt>Attempt&nbsp;to&nbsp;save&nbsp;modified&nbsp;registers&nbsp;to&nbsp;EEPROM.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;MX2Exception:&nbsp;if&nbsp;writing&nbsp;to&nbsp;EEPROM&nbsp;failed.</tt></dd></dl>
 
 <dl><dt><a name="MX2-set_baud_rate"><strong>set_baud_rate</strong></a>(self, baud_rate: int) -&gt; None</dt><dd><tt>Set&nbsp;serial&nbsp;baud&nbsp;rate.&nbsp;Can&nbsp;take&nbsp;the&nbsp;following&nbsp;values:<br>
 &nbsp;&nbsp;&nbsp;2400,&nbsp;4800,&nbsp;9600,&nbsp;19200,&nbsp;38400,&nbsp;57600,&nbsp;76800,&nbsp;115200.<br>

@@ -16,9 +16,9 @@ class TestModbus(unittest.TestCase):
             self.mx.set_latency_time(t)
             self.assertEqual(self.mx.get_latency_time(), t)
             self.mx.set_baud_rate(9600)
-            self.assertEqual(self.mx._wait_time, t + int(11*3500/self.mx.get_baud_rate()))
+            self.assertEqual(self.mx._wait_time, t/1000.0 + 11*3.5/self.mx.get_baud_rate())
             self.mx.set_baud_rate(2400)
-            self.assertEqual(self.mx._wait_time, t + int(11*3500/self.mx.get_baud_rate()))
+            self.assertEqual(self.mx._wait_time, t/1000.0 + 11*3.5/self.mx.get_baud_rate())
     
     def test_set_latency_time_fail(self):
         for t in [-100, 1100]:

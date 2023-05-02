@@ -59,7 +59,7 @@ class RegisterValue:
         self.register = register
         self.value = value
     
-    def __int__(self) -> int:
+    def __index__(self) -> int:
         return self.value
     
     def __eq__(self, other) -> bool:

@@ -4,6 +4,7 @@ import mx2
 from mx2.exceptions import *
 from mx2.enums import FunctionCode, ExceptionCode, Coil, MonitoringFunctions,\
                       StandardFunctions, MainProfileParameters
+from mx2.types import CoilValue, RegisterValue
 
 
 class TestInverter(unittest.TestCase):
@@ -242,3 +243,17 @@ class TestInverter(unittest.TestCase):
             self.mx.read_fault_monitor(1, -1)
         with self.assertRaises(BadParameterException):
             self.mx.read_fault_monitor(1, 10)
+
+    def test_save_settings_to_eeprom_ok(self):
+        self.mx.read_coil_status = Mock(return_value=[CoilValue(Coil.DataWritingInProgress, False)])
+        self.mx._dev_id = 8
+        self.mx._ser.read.return_value = bytes([8, 6, 0x08, 0xff, 0, 1, 0x7A, 0xC3])
+        self.mx.save_settings_to_eeprom()
+        
+    def test_save_settings_to_eeprom_fail(self):
+        self.mx.read_coil_status = Mock(return_value=[CoilValue(Coil.DataWritingInProgress, True)])
+        self.mx.read_registers = Mock(return_value=[RegisterValue(MonitoringFunctions.FaultMonitor1Factor, 8)])
+        self.mx._ser.read.return_value = bytes([8, 6, 0x08, 0xff, 0, 1, 0x7A, 0xC3])
+        self.mx._dev_id = 8
+        with self.assertRaises(MX2Exception):
+            self.mx.save_settings_to_eeprom()

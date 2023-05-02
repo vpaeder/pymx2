@@ -16,7 +16,8 @@ from time import time, sleep
 
 __all__ = ["MX2"]
 
-from .enums import FunctionCode, ExceptionCode, Coil, Register, MonitoringFunctions, FaultMonitorData
+from .enums import FunctionCode, ExceptionCode, Coil, Register, MonitoringFunctions,\
+                   FaultMonitorData, ModbusRegisters, TripFactor
 from .exceptions import *
 from .types import CoilValue, RegisterValue
 
@@ -50,13 +51,13 @@ class MX2():
     
     Protected attributes:
         _latency_time(int): additional delay, in ms, between request and response (default: 30).
-        _wait_time(int): total delay, in ms, between request and response (_latency_time + 3.5 characters).
+        _wait_time(float): total delay, in s, between request and response (_latency_time + 3.5 characters).
         _last_req_time(float): time when last request was issued.
         _dev_id(int): device ID (default: 1).
         _ser(serial.rs485.RS485): Modbus driver instance.
     """
     _latency_time = 30
-    _wait_time = 30 + int(11*3500/9600)
+    _wait_time = 0.030 + 11*3.5/9600
     _last_req_time = 0
     _dev_id = 1
     _ser = None
@@ -125,7 +126,7 @@ class MX2():
             raise SerialException("Connection is currently open.")
         if baud_rate in [2400, 4800, 9600, 19200, 38400, 57600, 76800, 115200]:
             self._ser.baudrate = baud_rate
-            self._wait_time = self._latency_time + int(11*3500/baud_rate)
+            self._wait_time = self._latency_time/1000.0 + 11*3.5/baud_rate
         else:
             raise BadParameterException("Invalid baud rate.")
     
@@ -233,7 +234,7 @@ class MX2():
         """
         if latency_time>=0 and latency_time<=1000:
             self._latency_time = latency_time
-            self._wait_time = latency_time + int(11*3500/self._ser.baudrate)
+            self._wait_time = latency_time/1000.0 + 11*3.5/self._ser.baudrate
         else:
             raise BadParameterException("Latency can be between 0 and 1000 ms.")
     
@@ -284,7 +285,7 @@ class MX2():
     def _wait(self) -> None:
         """Wait, if necessary, until enough time has elapsed
         after previous request."""
-        rem_time = self._wait_time/1000.0 - time() + self._last_req_time
+        rem_time = self._wait_time - time() + self._last_req_time
         if rem_time<=0:
             return
         sleep(rem_time)
@@ -354,12 +355,12 @@ class MX2():
                 raise BadResponseException("Data issued for incorrect function code.")
     
 
-    def read_coil_status(self, start_address:Coil, coil_count:int) -> 'list[CoilValue]':
+    def read_coil_status(self, start_address:Coil, coil_count:int=1) -> 'list[CoilValue]':
         """Read the status of one or more coils.
 
         Parameters:
             start_address(Coil): address of 1st coil to read.
-            coil_count(int): number of coils to query, between 1 and 31.
+            coil_count(int): number of coils to query, between 1 and 31 (default: 1).
         
         Returns:
             list[CoilValue]: the coil states as coil value objects.
@@ -438,12 +439,12 @@ class MX2():
         return values
 
 
-    def read_registers(self, start_address:Register, register_count:int) -> 'list[RegisterValue]':
+    def read_registers(self, start_address:Register, register_count:int=1) -> 'list[RegisterValue]':
         """Read the content of one or more registers.
 
         Parameters:
             start_address(Register): address of 1st register to read.
-            register_count(int): number of registers to query, from 1 to 16.
+            register_count(int): number of registers to query, from 1 to 16 (default: 1).
         
         Returns:
             list[RegisterValue]: register values as a list of RegisterValue objects.
@@ -808,3 +809,16 @@ class MX2():
         else:
             result = self.read_registers(addr, 1)
             return result[0]
+
+
+    def save_settings_to_eeprom(self) -> None:
+        """Attempt to save modified registers to EEPROM.
+        
+        Raises:
+            MX2Exception: if writing to EEPROM failed.
+        """
+        self.write_in_register(ModbusRegisters.WriteToEEPROM, 1)
+        while self.read_coil_status(Coil.DataWritingInProgress, 1)[0] == True:
+            sleep(self._wait_time)
+            if self.read_registers(MonitoringFunctions.FaultMonitor1, 1)[0] == TripFactor.EEPROMError:
+                raise MX2Exception("EEPROM write failed.")
