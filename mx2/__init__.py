@@ -801,7 +801,7 @@ class MX2():
         
         addr = [MonitoringFunctions.FaultMonitor1, MonitoringFunctions.FaultMonitor2,
                 MonitoringFunctions.FaultMonitor3, MonitoringFunctions.FaultMonitor4,
-                MonitoringFunctions.FaultMonitor5, MonitoringFunctions.FaultMonitor6][index] + value
+                MonitoringFunctions.FaultMonitor5, MonitoringFunctions.FaultMonitor6][index-1] + value
 
         if value in [FaultMonitorData.Frequency, FaultMonitorData.RunningTime, FaultMonitorData.PowerOnTime]:
             result = self.read_registers(addr, 2)
