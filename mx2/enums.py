@@ -1083,6 +1083,7 @@ class MotorConstantsFunctions(Register):
     H020 = 0x1516
     MotorParameterR2 = 0x1518
     H021 = 0x1518
+    MotorParameterL = 0x151A
     H022 = 0x151A
     MotorParameterIo = 0x151C
     H023 = 0x151C
@@ -1092,6 +1093,7 @@ class MotorConstantsFunctions(Register):
     H030 = 0x1525
     AutoTuningParameterR2 = 0x1527
     H031 = 0x1527
+    AutoTuningParameterL = 0x1529
     H032 = 0x1529
     AutoTuningParameterIo = 0x152B
     H033 = 0x152B
@@ -1566,6 +1568,7 @@ class SecondMotorFunctions(Register):
     H220 = 0x2516
     MotorParameterR2 = 0x2518
     H221 = 0x2518
+    MotorParameterL = 0x251A
     H222 = 0x251A
     MotorParameterIo = 0x251C
     H223 = 0x251C
@@ -1575,6 +1578,7 @@ class SecondMotorFunctions(Register):
     H230 = 0x2525
     AutoTuningParameterR2 = 0x2527
     H231 = 0x2527
+    AutoTuningParameterL = 0x2529
     H232 = 0x2529
     AutoTuningParameterIo = 0x252B
     H233 = 0x252B
