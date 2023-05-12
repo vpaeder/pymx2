@@ -466,7 +466,7 @@ class MX2():
             last_reg = start_address.next(register_count-1)[-1]
             word_count = last_reg.address - start_address.address + last_reg.n_words
             if word_count > 16:
-                BadParameterException("Register count spans a too large address range.")
+                raise BadParameterException("Register count spans a too large address range.")
         else:
             word_count = register_count
         
