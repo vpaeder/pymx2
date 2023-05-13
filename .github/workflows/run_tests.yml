@@ -28,6 +28,6 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         python -m setup install    
-    - name: Test tests
+    - name: Run Tests
       run: |
         python -m unittest
